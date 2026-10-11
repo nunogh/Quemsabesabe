@@ -1,0 +1,1765 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2a58c8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Quem Sabe, Sabe!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: fundo claro e neutro, uma coluna central; placar compacto no topo, cartão da pergunta com relógio, respostas em botões grandes. Tema único claro por escolha. */
+:root{
+  color-scheme:light;
+  --bg:#f5f7fb; --card:#ffffff; --ink:#16223b; --muted:#5d6a85; --line:#e1e6f0;
+  --accent:#2a58c8; --accent-soft:#e9effc; --accent-ink:#ffffff;
+  --good:#168a5b; --good-soft:#e3f5ec; --bad:#c8453b; --bad-soft:#fbe9e7;
+  --b0:#168a5b; --b1:#d9a10b; --b2:#e0771f; --b3:#c8453b; --bx:#8b95ab;
+  --on-band:#ffffff;
+  --display:"Sora","Segoe UI",system-ui,sans-serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.4;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:660px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;gap:2px;text-align:center}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(1.7rem,6vw,2.3rem);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:0;font-size:.95rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 1px 2px rgba(22,34,59,.04),0 8px 24px rgba(22,34,59,.06);display:flex;flex-direction:column;gap:18px}
+label,.lbl{font-weight:700;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px}
+input[type=text]{font:inherit;font-weight:600;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);width:100%}
+input[type=text]:disabled{background:var(--bg);color:var(--muted)}
+input:focus-visible,button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.btn{font-family:var(--display);font-weight:600;font-size:1.05rem;border:0;border-radius:12px;padding:14px 20px;cursor:pointer;background:var(--accent);color:var(--accent-ink);transition:transform .08s,filter .15s}
+.btn:hover{filter:brightness(1.07)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:transparent;color:var(--muted);font-size:.95rem;padding:8px 12px;font-weight:600}
+.btn.ghost:hover{color:var(--ink);filter:none}
+.btn.soft{background:var(--accent-soft);color:var(--accent)}
+
+/* interruptores */
+.opt{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfcfe}
+.opt .t{display:flex;flex-direction:column;min-width:0}
+.opt .t b{font-weight:700}
+.opt .t small{color:var(--muted);font-size:.85rem}
+.sw{position:relative;flex:none;width:48px;height:28px}
+.sw input{position:absolute;inset:0;opacity:0;cursor:pointer;margin:0;width:100%;height:100%}
+.sw i{position:absolute;inset:0;border-radius:99px;background:#c9d1e2;transition:background .15s;pointer-events:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.sw input:checked+i{background:var(--accent)}
+.sw input:checked+i::after{transform:translateX(20px)}
+.sw input:focus-visible+i{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.rules{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:5px;font-size:.95rem}
+.rules b{color:var(--ink)}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
+.meta .st{display:flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--bx);display:inline-block}
+.dot.on{background:var(--good)} .dot.busy{background:var(--b1)}
+
+/* placar */
+.scores{display:grid;gap:8px;grid-template-columns:repeat(var(--n,3),minmax(0,1fr))}
+.score{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 8px;text-align:center;min-width:0}
+.score.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.score .n{font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score .a{font-size:.7rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.score .p{font-family:var(--display);font-weight:700;font-size:1.5rem;line-height:1.15;color:var(--accent);font-variant-numeric:tabular-nums}
+
+.turn{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.who{font-family:var(--display);font-weight:600;font-size:1.05rem}
+.count{font-size:.85rem;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.badge{display:inline-block;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:99px;margin-right:6px}
+
+/* relógio */
+.timer{display:flex;align-items:center;gap:14px;padding:12px;border-radius:12px;background:var(--bg)}
+.timer[data-b="0"]{--bandc:var(--b0)} .timer[data-b="1"]{--bandc:var(--b1)}
+.timer[data-b="2"]{--bandc:var(--b2)} .timer[data-b="3"]{--bandc:var(--b3)} .timer[data-b="x"]{--bandc:var(--bx)}
+.ring{position:relative;width:84px;height:84px;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:8}
+.ring .trk{stroke:var(--line)}
+.ring .prg{stroke:var(--bandc,var(--b0));stroke-linecap:round;stroke-dasharray:238.76;stroke-dashoffset:0}
+.secs{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.ring.hurry .secs{color:var(--b3)}
+.worth{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.wl{font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.wv{font-family:var(--display);font-weight:700;font-size:1.25rem;line-height:1;font-variant-numeric:tabular-nums}
+.bands{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.bands span{display:flex;flex-direction:column;align-items:center;border-radius:8px;padding:3px 2px;background:var(--card);border:1px solid var(--line);min-width:0}
+.bands b{font-family:var(--display);font-size:1rem;line-height:1.2}
+.bands small{font-size:.58rem;color:var(--muted);white-space:nowrap;font-weight:600}
+.bands span.on{background:var(--bandc);border-color:var(--bandc);color:var(--on-band)}
+.bands span.on small{color:var(--on-band)}
+@media (max-width:380px){.ring{width:70px;height:70px}.secs{font-size:1.1rem}.timer{gap:10px}}
+
+.q{font-family:var(--display);font-weight:600;font-size:clamp(1.3rem,4.8vw,1.7rem);line-height:1.25;margin:0;text-wrap:balance}
+.src{font-size:.75rem;color:var(--muted);margin:-8px 0 0}
+.hint{font-size:.9rem;color:var(--muted);margin:0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:480px){.answers.text{grid-template-columns:1fr}}
+.ans{font:inherit;font-weight:600;font-size:1.05rem;text-align:left;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:#fbfcfe;color:var(--ink);cursor:pointer;min-height:62px;min-width:0;transition:border-color .12s,background .12s}
+.ans .l{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-family:var(--display);font-weight:700;font-size:.95rem}
+.ans span:last-child{min-width:0;overflow-wrap:anywhere}
+.ans:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.ans:disabled{cursor:default}
+.ans.ok{border-color:var(--good);background:var(--good-soft)}
+.ans.ok .l{background:var(--good);color:#fff}
+.ans.bad{border-color:var(--bad);background:var(--bad-soft)}
+.ans.bad .l{background:var(--bad);color:#fff}
+.ans.dim{opacity:.5}
+.answers.emoji{grid-template-columns:repeat(var(--cols,3),1fr)}
+.answers.emoji .ans{justify-content:center;font-size:clamp(2.6rem,12vw,3.6rem);min-height:96px;padding:8px}
+.answers.emoji.multi .ans{font-size:clamp(1.4rem,6vw,2rem);text-align:center}
+.answers.emoji .ans .l{display:none}
+.feedback{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.feedback p{margin:0;font-weight:700;font-size:1.05rem}
+.feedback small{font-weight:600;color:var(--muted);font-size:.9rem}
+.feedback .good{color:var(--good)} .feedback .nope{color:var(--bad)}
+.foot{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap}
+.podium{display:flex;flex-direction:column;gap:10px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-weight:700}
+.row small{display:block;color:var(--muted);font-weight:600;font-size:.82rem}
+.row b{font-family:var(--display);font-size:1.4rem;color:var(--accent);font-variant-numeric:tabular-nums}
+.row.win{border-color:var(--accent);background:var(--accent-soft)}
+.pop{animation:pop .3s ease}
+@keyframes pop{from{transform:translateY(6px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pop{animation:none}.btn,.sw i,.sw i::after,.ans{transition:none}}
+
+/* configuração de jogadores */
+.stepper{display:flex;align-items:center;gap:12px}
+.step{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:#fbfcfe;color:var(--accent);font-family:var(--display);font-weight:700;font-size:1.4rem;cursor:pointer;line-height:1}
+.step:hover:not(:disabled){background:var(--accent-soft);border-color:var(--accent)}
+.step:disabled{color:#b3bccf;cursor:default}
+.stepper output{min-width:34px;text-align:center;font-family:var(--display);font-weight:700;font-size:1.6rem;font-variant-numeric:tabular-nums}
+.stepper .max{color:var(--muted);font-size:.85rem}
+.players{display:flex;flex-direction:column;gap:8px}
+.prow{display:grid;grid-template-columns:28px minmax(0,1fr) 108px;gap:8px;align-items:center}
+.pn{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:.85rem}
+select{font:inherit;font-weight:600;padding:11px 10px;border-radius:10px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);width:100%}
+select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px}
+.scores.many .score{padding:7px 6px}
+.scores.many .score .p{font-size:1.25rem}
+.scores.many .score .n{font-size:.76rem}
+.score .g{font-size:.66rem;color:var(--muted);letter-spacing:.04em}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Quem Sabe, <span>Sabe!</span></h1>
+    <p class="sub">Jogo de cultura geral para a família</p>
+  </header>
+
+  <!-- Configuração -->
+  <section class="card" id="setup">
+    <div class="field">
+      <span class="lbl" id="lblN">Número de jogadores</span>
+      <div class="stepper" role="group" aria-labelledby="lblN">
+        <button type="button" class="step" id="nMinus" aria-label="Menos um jogador">−</button>
+        <output id="nOut" aria-live="polite">2</output>
+        <button type="button" class="step" id="nPlus" aria-label="Mais um jogador">+</button>
+        <span class="max">máximo 8</span>
+      </div>
+    </div>
+    <div class="players" id="plist"></div>
+    <p class="hint">Cada jogador recebe perguntas do seu grupo de idades: 5–6, 7–8, 9–10 ou 11–12 anos.</p>
+
+    <div class="opt" id="optAI" hidden>
+      <div class="t"><b>Renovar perguntas com o Claude</b><small>Cria perguntas novas durante o jogo para nunca se repetirem</small></div>
+      <span class="sw"><input type="checkbox" id="useAI" checked aria-label="Renovar perguntas com o Claude"><i></i></span>
+    </div>
+
+    <ul class="rules">
+      <li>Os pais leem a pergunta em voz alta. <b>O relógio começa assim que ela aparece.</b></li>
+      <li>Cada resposta tem <b>1 minuto</b>. <b>4 pontos</b> até 15 s, <b>3</b> até 30 s, <b>2</b> até 45 s, <b>1</b> até 60 s. Errada ou sem tempo: 0.</li>
+      <li>Os jogadores respondem à vez, sempre com perguntas do seu grupo de idades.</li>
+      <li>Nenhuma pergunta se repete, nem neste jogo nem nos seguintes.</li>
+    </ul>
+    <button class="btn" id="start">Começar o jogo</button>
+    <div class="meta">
+      <span class="st"><i class="dot" id="dbDot"></i><span id="dbTxt">A carregar histórico…</span></span>
+      <button class="btn ghost" id="resetHist" type="button">Limpar histórico</button>
+    </div>
+  </section>
+
+  <!-- Jogo -->
+  <section id="game" hidden>
+    <div class="wrap">
+      <div class="scores" id="scores"></div>
+      <div class="card" id="qcard">
+        <div class="turn"><span class="who" id="who"></span><span class="count" id="count"></span></div>
+        <div class="timer" id="timer" data-b="0">
+          <div class="ring" id="ring">
+            <svg viewBox="0 0 88 88" aria-hidden="true"><circle class="trk" cx="44" cy="44" r="38"/><circle class="prg" id="prg" cx="44" cy="44" r="38"/></svg>
+            <span class="secs" id="secs" role="timer" aria-label="Tempo restante">1:00</span>
+          </div>
+          <div class="worth">
+            <span class="wl" id="wl">Vale agora</span>
+            <span class="wv" id="wv">4 pontos</span>
+            <div class="bands" id="bands">
+              <span><b>4</b><small>0–15 s</small></span>
+              <span><b>3</b><small>15–30 s</small></span>
+              <span><b>2</b><small>30–45 s</small></span>
+              <span><b>1</b><small>45–60 s</small></span>
+            </div>
+          </div>
+        </div>
+        <p class="q" id="q"></p>
+        <p class="hint" id="hint" hidden>Mostra o ecrã e deixa a criança tocar na resposta.</p>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="fb" hidden><p id="fbtxt"></p><button class="btn" id="next">Próxima</button></div>
+      </div>
+      <div class="foot"><button class="btn ghost" id="end">Terminar e ver resultados</button></div>
+    </div>
+  </section>
+
+  <!-- Fim -->
+  <section class="card" id="over" hidden>
+    <p class="q" style="text-align:center">Fim do jogo</p>
+    <div class="podium" id="podium"></div>
+    <button class="btn" id="again">Jogar outra vez</button>
+  </section>
+</div>
+
+<script>
+// [pergunta, resposta correcta, errada, errada, errada]
+
+// [pergunta, emoji correcto, errado, errado, errado] — 4 anos: contar, comparar, para que serve, onde vive
+const Q56 = [
+  ["Qual é o animal que nos dá o leite?","🐮","🐔","🐟","🐴"],
+  ["O que usamos quando chove?","☂️","🕶️","🧤","🎒"],
+  ["Onde estão três estrelas?","⭐⭐⭐","⭐⭐","⭐⭐⭐⭐⭐","⭐"],
+  ["Que animal faz «cocorocó»?","🐓","🐑","🐷","🦆"],
+  ["Qual destes animais vive na água?","🐠","🐘","🐎","🦒"],
+  ["O que vemos no céu à noite?","🌙","☀️","🌳","🚗"],
+  ["Com o que lavamos os dentes?","🪥","🧦","🥄","🎈"],
+  ["Qual é o animal às riscas?","🦓","🐘","🦁","🐊"],
+  ["Qual é o veículo que voa?","✈️","🚜","🚢","🚲"],
+  ["Qual é o carro dos bombeiros?","🚒","🚑","🚌","🚜"],
+  ["Qual é a fruta vermelha com pintinhas?","🍓","🍌","🍐","🍋"],
+  ["O que cresce numa árvore?","🍎","🥕","🍞","🧀"],
+  ["Que animal leva a casa às costas?","🐌","🐶","🐦","🐠"],
+  ["Qual é o animal mais pequenino?","🐜","🐘","🐄","🦒"],
+  ["O que é quente?","🔥","🧊","⛄","❄️"],
+  ["Qual destes é um instrumento de música?","🎸","🔨","🍴","📏"],
+  ["Onde dormimos?","🛏️","🛁","🚪","🚗"],
+  ["O que usamos para ver as horas?","⏰","🧴","🔑","📦"],
+  ["Qual é o triângulo?","🔺","🟦","🔵","⭐"],
+  ["Que animal faz «bééé»?","🐑","🐱","🐮","🐴"],
+  ["Quem põe ovos?","🐔","🐶","🐷","🐱"],
+  ["O que pomos nas mãos quando faz frio?","🧤","🕶️","👙","👡"],
+  ["Qual é frio e doce?","🍦","🍲","☕","🍳"],
+  ["Qual é o animal com o pescoço mais comprido?","🦒","🐖","🐢","🦔"],
+  ["O que fazem as abelhas?","🍯","🥛","🧃","🍫"],
+  ["Qual é o transporte que anda nos carris?","🚆","🚗","🛵","🚁"],
+  ["Qual é o animal que adora bananas e trepa às árvores?","🐒","🐕","🐖","🦆"],
+  ["O que sai da torneira?","💧","🔥","🍪","⚽"],
+  ["O que usamos para escrever?","✏️","🥄","🧦","🔑"],
+  ["Onde vivem os pinguins?","🧊","🏜️","🌴","🏙️"],
+  ["Qual é a fruta amarela de que os macacos gostam?","🍌","🍎","🍇","🥝"],
+  ["O que usamos para tirar fotografias?","📷","🔨","🍴","🧸"],
+  ["Que animal vive na quinta e faz «oinc»?","🐷","🐔","🐑","🐴"],
+  ["Qual é o transporte que anda na água?","⛵","🚲","🚂","✈️"],
+  ["O que acende quando está escuro?","💡","🧦","🍎","📦"],
+  ["Qual destes é um brinquedo?","🧸","🥄","🔑","🧹"],
+  ["Qual é a flor?","🌹","🍄","🌲","🚗"],
+  ["Que animal tem oito patas?","🕷️","🐞","🐝","🦋"],
+  ["O que comem as vacas?","🌿","🍫","🍕","🍔"],
+  ["Como se chama a cria da galinha?","🐥","🐶","🐸","🐭"]
+];
+
+const Q78 = [
+  // Portugal
+  ["Quem foi o primeiro rei de Portugal?","D. Afonso Henriques","D. Dinis","D. Manuel I","D. João I"],
+  ["Que navegador chegou à Índia por mar em 1498?","Vasco da Gama","Pedro Álvares Cabral","Bartolomeu Dias","Fernão de Magalhães"],
+  ["Em que cidade fica a Torre de Belém?","Lisboa","Porto","Coimbra","Faro"],
+  ["Em que data se comemora a Revolução dos Cravos?","25 de Abril","1 de Dezembro","5 de Outubro","10 de Junho"],
+  ["Em que cidade fica a Ponte Dom Luís I?","Porto","Lisboa","Braga","Aveiro"],
+  ["Que cidade é conhecida pelos barcos moliceiros e pelos ovos moles?","Aveiro","Viseu","Évora","Leiria"],
+  ["Que rio passa na cidade de Coimbra?","Mondego","Tejo","Douro","Sado"],
+  ["Qual é a capital da Madeira?","Funchal","Ponta Delgada","Angra do Heroísmo","Horta"],
+  ["Em que região de Portugal fica a cidade de Faro?","Algarve","Alentejo","Minho","Beira Baixa"],
+  ["Qual é a montanha mais alta de Portugal, nos Açores?","Montanha do Pico","Serra da Estrela","Pico Ruivo","Serra do Gerês"],
+  ["Quantas ilhas tem o arquipélago dos Açores?","9","5","7","12"],
+  ["Qual era a moeda de Portugal antes do euro?","Escudo","Peseta","Franco","Libra"],
+  ["Em que data se celebra o Dia de Portugal?","10 de Junho","25 de Abril","1 de Maio","15 de Agosto"],
+  ["Quem escreveu «Os Lusíadas»?","Luís de Camões","Eça de Queirós","Fernando Pessoa","Gil Vicente"],
+  // Geografia
+  ["Qual é a capital da Alemanha?","Berlim","Munique","Hamburgo","Frankfurt"],
+  ["Qual é a capital do Brasil?","Brasília","Rio de Janeiro","São Paulo","Salvador"],
+  ["Qual é a capital da Irlanda?","Dublin","Belfast","Londres","Cork"],
+  ["Qual é a capital da Holanda?","Amesterdão","Roterdão","Bruxelas","Haia"],
+  ["Qual é a capital de Itália?","Roma","Milão","Veneza","Nápoles"],
+  ["Qual é o maior continente do mundo?","Ásia","África","América","Europa"],
+  ["Que oceano fica entre a Europa e a América?","Atlântico","Pacífico","Índico","Ártico"],
+  ["Em que país fica o Coliseu?","Itália","Grécia","Espanha","França"],
+  ["Em que país vivem os cangurus?","Austrália","Brasil","Índia","Quénia"],
+  ["Em que país fica a Grande Muralha?","China","Japão","Índia","Rússia"],
+  ["Em que continente fica o Brasil?","América do Sul","América do Norte","África","Ásia"],
+  // Ciências e natureza
+  ["Quantas patas tem um insecto?","6","8","4","10"],
+  ["Como se chama o filhote da rã?","Girino","Larva","Pintainho","Cria"],
+  ["Qual é o maior animal terrestre?","Elefante","Girafa","Rinoceronte","Urso-polar"],
+  ["De que se alimentam as abelhas para fazer o mel?","Néctar das flores","Folhas","Raízes","Sementes"],
+  ["Que órgãos usamos para respirar?","Pulmões","Rins","Estômago","Fígado"],
+  ["Quantos dentes tem um adulto, quando tem todos?","32","20","28","40"],
+  ["Quanto tempo demora a Terra a dar uma volta ao Sol?","Um ano","Um dia","Um mês","Uma semana"],
+  ["Quanto tempo demora a Terra a dar uma volta sobre si mesma?","24 horas","12 horas","7 dias","365 dias"],
+  ["Qual destes animais é um réptil?","Crocodilo","Rã","Golfinho","Tubarão"],
+  ["Qual destas aves não voa?","Avestruz","Pardal","Cegonha","Gaivota"],
+  ["Que animal muda de cor para se esconder?","Camaleão","Coelho","Cavalo","Pato"],
+  ["Em que estado físico está o gelo?","Sólido","Líquido","Gasoso","Pastoso"],
+  ["Como se chama a abertura de um vulcão por onde sai a lava?","Cratera","Gruta","Vale","Duna"],
+  ["O que é a Lua em relação à Terra?","Um satélite natural","Uma estrela","Um planeta","Um cometa"],
+  ["Que material é atraído por um íman?","Ferro","Madeira","Vidro","Plástico"],
+  ["Quantos dias tem Fevereiro num ano bissexto?","29","28","30","31"],
+  ["Qual é o planeta mais pequeno do Sistema Solar?","Mercúrio","Marte","Vénus","Terra"],
+  // Matemática
+  ["Quantos centímetros tem um metro?","100","10","1000","50"],
+  ["Quantos minutos tem uma hora e meia?","90","80","100","75"],
+  ["Qual é a metade de 150?","75","70","65","80"],
+  ["Qual é o dobro de 35?","70","65","60","75"],
+  ["Quantos dias tem o mês de Abril?","30","31","29","28"],
+  ["Qual figura tem 4 lados iguais e 4 ângulos rectos?","Quadrado","Triângulo","Círculo","Pentágono"],
+  ["Quantos lados tem um pentágono?","5","6","4","8"],
+  ["Quanto é 1000 menos 1?","999","900","990","1001"],
+  ["Quantos meses do ano têm 28 dias?","Todos os 12","Só 1","Só 2","Nenhum"],
+  // Língua portuguesa
+  ["Qual é o plural de «pão»?","Pães","Pãos","Pões","Pans"],
+  ["Qual é um sinónimo de «rápido»?","Veloz","Lento","Pesado","Calmo"],
+  ["Qual destas palavras é um verbo?","Correr","Casa","Bonito","Amarelo"],
+  ["Quantas vogais tem o alfabeto?","5","6","7","4"],
+  ["Qual é o feminino de «rei»?","Rainha","Reia","Reina","Reiza"],
+  ["Qual é o diminutivo de «casa»?","Casinha","Casona","Casarão","Casal"],
+  ["Qual é o contrário de «antes»?","Depois","Durante","Sempre","Nunca"],
+  // Cultura e desporto
+  ["Quantas notas musicais existem?","7","5","8","12"],
+  ["Quem escreveu «O Patinho Feio»?","Hans Christian Andersen","Irmãos Grimm","Charles Perrault","Roald Dahl"],
+  ["Quantos jogadores de cada equipa estão em campo num jogo de basquetebol?","5","6","7","11"],
+  ["Que cor se obtém misturando vermelho e azul?","Roxo","Verde","Laranja","Castanho"],
+  ["Que cor se obtém misturando vermelho e amarelo?","Laranja","Verde","Roxo","Rosa"],
+  ["Em que desporto se usa uma raquete e um volante?","Badmínton","Ténis","Golfe","Hóquei"]
+];
+const Q910 = [
+  // História e Portugal
+  ["Em que ano os portugueses conquistaram Ceuta?","1415","1385","1498","1500"],
+  ["Que navegador português iniciou a primeira viagem à volta do mundo, ao serviço de Espanha?","Fernão de Magalhães","Bartolomeu Dias","Pedro Álvares Cabral","Gil Eanes"],
+  ["Em que ano foi implantada a República em Portugal?","1910","1890","1926","1974"],
+  ["Que rei mandou plantar o Pinhal de Leiria?","D. Dinis","D. Afonso Henriques","D. João II","D. Pedro I"],
+  ["Em que batalha de 1385 os portugueses venceram os castelhanos?","Aljubarrota","Ourique","Ameixial","Salado"],
+  ["Que infante ficou conhecido como «o Navegador»?","Infante D. Henrique","Infante D. Pedro","Infante D. Fernando","Infante D. Duarte"],
+  ["Em que ano Portugal restaurou a sua independência de Espanha?","1640","1580","1755","1807"],
+  ["Que navegador chegou ao Brasil em 1500?","Pedro Álvares Cabral","Vasco da Gama","Bartolomeu Dias","Diogo Cão"],
+  ["Que cidade é conhecida como o «Berço da Nação»?","Guimarães","Coimbra","Braga","Viseu"],
+  ["Quem escreveu «Os Maias»?","Eça de Queirós","Camilo Castelo Branco","Almeida Garrett","José Saramago"],
+  ["Que escritor português ganhou o Prémio Nobel da Literatura em 1998?","José Saramago","Fernando Pessoa","Miguel Torga","Eça de Queirós"],
+  ["Quem escreveu «A Menina do Mar»?","Sophia de Mello Breyner Andresen","Florbela Espanca","Matilde Rosa Araújo","Alice Vieira"],
+  ["Quem é o autor de «Mensagem», o único livro em português que publicou em vida?","Fernando Pessoa","Luís de Camões","Cesário Verde","Antero de Quental"],
+  ["Em que cidade fica a universidade mais antiga de Portugal, fundada em 1290?","Coimbra","Lisboa","Porto","Évora"],
+  ["Que ponte liga Lisboa a Almada e foi inaugurada em 1966?","Ponte 25 de Abril","Ponte Vasco da Gama","Ponte da Arrábida","Ponte Dom Luís I"],
+  ["Qual é o instrumento típico do fado, com forma de pera?","Guitarra portuguesa","Cavaquinho","Bandolim","Viola campaniça"],
+  ["Qual destes pratos leva bacalhau, batata palha, ovos e cebola?","Bacalhau à Brás","Caldo verde","Arroz de cabidela","Cozido à portuguesa"],
+  // Geografia
+  ["Qual é o rio mais comprido da Península Ibérica?","Tejo","Douro","Ebro","Guadiana"],
+  ["Qual é o ponto mais alto de Portugal continental?","Serra da Estrela","Serra do Gerês","Serra do Marão","Serra de Sintra"],
+  ["Qual é a capital da Polónia?","Varsóvia","Cracóvia","Praga","Budapeste"],
+  ["Qual é a capital da Áustria?","Viena","Berlim","Zurique","Salzburgo"],
+  ["Qual é a capital do Canadá?","Otava","Toronto","Montreal","Vancouver"],
+  ["Qual é a capital da Austrália?","Camberra","Sydney","Melbourne","Perth"],
+  ["Qual é a capital da Grécia?","Atenas","Roma","Istambul","Salónica"],
+  ["Qual é a capital da Suécia?","Estocolmo","Oslo","Copenhaga","Helsínquia"],
+  ["Qual é o rio que atravessa a cidade do Cairo?","Nilo","Amazonas","Danúbio","Ganges"],
+  ["Qual é a maior ilha do arquipélago dos Açores?","São Miguel","Terceira","Pico","Faial"],
+  ["Quantos distritos tem Portugal continental?","18","16","20","22"],
+  ["Que cordilheira tem o Evereste, a montanha mais alta do mundo?","Himalaias","Alpes","Andes","Pirenéus"],
+  ["Que estreito separa a Península Ibérica de África?","Estreito de Gibraltar","Canal da Mancha","Estreito de Bering","Bósforo"],
+  ["Em que país ficam as pirâmides de Gizé?","Egipto","México","Peru","Iraque"],
+  ["Que país tem a forma de uma bota?","Itália","Grécia","Portugal","Noruega"],
+  // Ciências
+  ["Que gás as plantas absorvem para fazer a fotossíntese?","Dióxido de carbono","Oxigénio","Azoto","Hidrogénio"],
+  ["Qual é o planeta mais afastado do Sol no Sistema Solar?","Neptuno","Urano","Saturno","Plutão"],
+  ["Qual é o osso mais comprido do corpo humano?","Fémur","Úmero","Tíbia","Rádio"],
+  ["Quantos ossos tem, aproximadamente, um adulto?","206","106","306","412"],
+  ["Que camada da atmosfera nos protege dos raios ultravioleta?","Camada de ozono","Troposfera","Ionosfera","Camada de nuvens"],
+  ["A que grupo de animais pertence a baleia?","Mamíferos","Peixes","Répteis","Anfíbios"],
+  ["Que órgão filtra o sangue e produz a urina?","Rim","Fígado","Pulmão","Baço"],
+  ["Em que estado físico está a água a 120 °C, à pressão normal?","Gasoso","Líquido","Sólido","Plasma"],
+  ["Como se chama a passagem da água do estado líquido ao gasoso?","Evaporação","Condensação","Solidificação","Fusão"],
+  ["Qual é o único metal líquido à temperatura ambiente?","Mercúrio","Ferro","Alumínio","Cobre"],
+  ["Como se chama um animal que se alimenta só de plantas?","Herbívoro","Carnívoro","Omnívoro","Insectívoro"],
+  ["Quantos planetas tem o Sistema Solar?","8","7","9","10"],
+  ["Como se chama a nossa galáxia?","Via Láctea","Andrómeda","Órion","Triângulo"],
+  ["Qual é o gás mais abundante no Sol?","Hidrogénio","Oxigénio","Hélio","Azoto"],
+  ["Qual é a parte da planta que absorve a água do solo?","Raiz","Folha","Flor","Caule"],
+  ["Qual é o maior órgão do corpo humano?","Pele","Fígado","Intestino","Cérebro"],
+  ["Que vitamina o nosso corpo produz com a ajuda do Sol?","Vitamina D","Vitamina C","Vitamina A","Vitamina K"],
+  ["Num eclipse solar, que astro fica entre a Terra e o Sol?","Lua","Marte","Vénus","Mercúrio"],
+  ["Quem formulou a lei da gravitação universal?","Isaac Newton","Albert Einstein","Galileu Galilei","Charles Darwin"],
+  ["Quem desenvolveu a teoria da relatividade?","Albert Einstein","Isaac Newton","Marie Curie","Nikola Tesla"],
+  ["Quantos corações tem um polvo?","3","1","2","8"],
+  ["Que instrumento mede a pressão atmosférica?","Barómetro","Termómetro","Anemómetro","Higrómetro"],
+  ["Em que tipo de rocha se encontram mais fósseis?","Sedimentar","Magmática","Metamórfica","Vulcânica"],
+  // Matemática e Língua Portuguesa
+  ["Quantos graus tem um ângulo recto?","90","45","180","60"],
+  ["Quanto soma os ângulos internos de um triângulo?","180°","90°","270°","360°"],
+  ["Quantos lados tem um octógono?","8","6","7","10"],
+  ["Como se chama o polígono de cinco lados?","Pentágono","Hexágono","Heptágono","Quadrilátero"],
+  ["Qual destes números é primo?","29","27","33","39"],
+  ["A fracção 3/4 corresponde a que percentagem?","75%","34%","60%","25%"],
+  ["Como se escreve 49 em numeração romana?","XLIX","XXXXIX","IL","LXIX"],
+  ["Qual é o plural de «cidadão»?","Cidadãos","Cidadões","Cidadães","Cidadãoes"],
+  ["Qual é o feminino de «actor»?","Actriz","Actora","Actoriz","Actrice"],
+  ["Qual é o antónimo de «generoso»?","Egoísta","Bondoso","Altruísta","Simpático"],
+  ["A que classe pertence a palavra «rapidamente»?","Advérbio","Adjectivo","Verbo","Substantivo"],
+  ["Quantas sílabas tem a palavra «borboleta»?","4","3","5","6"],
+  // Mundo e cultura
+  ["Quem pintou «A Noite Estrelada»?","Vincent van Gogh","Pablo Picasso","Claude Monet","Salvador Dalí"],
+  ["Quem inventou a imprensa de caracteres móveis na Europa?","Gutenberg","Edison","Leonardo da Vinci","Marco Polo"],
+  ["Quem foi o primeiro homem a pisar a Lua?","Neil Armstrong","Yuri Gagarin","Buzz Aldrin","John Glenn"],
+  ["Em que ano o homem pisou a Lua pela primeira vez?","1969","1957","1981","1945"],
+  ["Quantos anéis tem o símbolo olímpico?","5","4","6","7"],
+  ["De que país é originário o sushi?","Japão","China","Coreia do Sul","Tailândia"],
+  ["Qual é a língua com mais falantes nativos do mundo?","Mandarim","Inglês","Espanhol","Hindi"],
+  ["Qual é a moeda do Japão?","Iene","Yuan","Won","Rupia"]
+];
+const Q1112 = [
+];
+Q1112.push(
+  // História de Portugal
+  ["Em que ano D. Afonso Henriques conquistou Lisboa aos mouros?","1147","1139","1249","1385"],
+  ["Em que ano terminou a conquista do Algarve, no reinado de D. Afonso III?","1249","1147","1385","1415"],
+  ["Que rei português ficou conhecido como «o Lavrador»?","D. Dinis","D. Afonso III","D. João II","D. Pedro I"],
+  ["Quem era o Mestre de Avis, aclamado rei em 1385?","D. João I","D. Duarte","D. Afonso V","D. Fernando"],
+  ["Qual era o nome da amada de D. Pedro I, que a lenda diz ter sido coroada depois de morta?","Inês de Castro","Filipa de Lencastre","Leonor Teles","Beatriz de Castela"],
+  ["Que rei português morreu na batalha de Alcácer Quibir, em 1578?","D. Sebastião","D. Henrique","D. Manuel I","D. João III"],
+  ["Em que ano começou o domínio dos reis de Espanha sobre Portugal?","1580","1385","1640","1755"],
+  ["Que ministro dirigiu a reconstrução de Lisboa depois do terramoto de 1755?","Marquês de Pombal","Duque de Wellington","Conde de Abranhos","Visconde de Seabra"],
+  ["Quem foi o último rei de Portugal?","D. Manuel II","D. Carlos","D. Luís","D. Pedro V"],
+  ["Qual foi a canção que serviu de senha à Revolução de 25 de Abril de 1974?","Grândola, Vila Morena","Venham Mais Cinco","Trova do Vento que Passa","Os Vampiros"],
+  ["Em que ano Portugal aderiu à actual União Europeia, então chamada CEE?","1986","1974","1992","2002"],
+  ["Em que ano começou a circular o euro, em notas e moedas, em Portugal?","2002","1986","1999","2010"],
+  ["Que navegador português dobrou o Cabo das Tormentas em 1488?","Bartolomeu Dias","Vasco da Gama","Diogo Cão","Gil Eanes"],
+  ["Que tratado de 1494 dividiu o mundo por descobrir entre Portugal e Castela?","Tratado de Tordesilhas","Tratado de Windsor","Tratado de Alcáçovas","Tratado de Zamora"],
+  ["Em que cidade indiana desembarcou Vasco da Gama em 1498?","Calecute","Goa","Cochim","Diu"],
+  ["Que cidade da Índia foi conquistada por Afonso de Albuquerque em 1510?","Goa","Bombaim","Calecute","Madras"],
+  ["Quem escreveu a «Peregrinação», relato de viagens pelo Oriente?","Fernão Mendes Pinto","Gil Vicente","Garcia de Orta","Damião de Góis"],
+  ["Quem é o autor da peça «Frei Luís de Sousa»?","Almeida Garrett","Camilo Castelo Branco","Alexandre Herculano","Eça de Queirós"],
+  ["Quem escreveu «O Crime do Padre Amaro»?","Eça de Queirós","Júlio Dinis","Camilo Castelo Branco","Aquilino Ribeiro"],
+  ["Quem escreveu «Ensaio sobre a Cegueira»?","José Saramago","Miguel Torga","António Lobo Antunes","Vergílio Ferreira"],
+  ["Qual é o heterónimo de Fernando Pessoa que escreveu «O Guardador de Rebanhos»?","Alberto Caeiro","Álvaro de Campos","Ricardo Reis","Bernardo Soares"],
+  ["Quem escreveu o «Auto da Barca do Inferno»?","Gil Vicente","Luís de Camões","Bernardim Ribeiro","Sá de Miranda"],
+  ["Em que ilha açoriana fica a cidade de Angra do Heroísmo?","Terceira","São Miguel","Faial","Graciosa"],
+  // História universal
+  ["Que civilização construiu o Coliseu, em Roma?","Os romanos","Os gregos","Os etruscos","Os egípcios"],
+  ["Em que ano começou a Revolução Francesa?","1789","1492","1815","1914"],
+  ["Em que ano terminou a Segunda Guerra Mundial?","1945","1918","1939","1962"],
+  ["Em que ano caiu o Muro de Berlim?","1989","1961","1945","1991"],
+  ["Que navegador chegou à América em 1492 ao serviço dos reis de Castela?","Cristóvão Colombo","Américo Vespúcio","Hernán Cortés","Vasco Núñez de Balboa"],
+  ["Como se chama a escrita dos antigos egípcios, feita de desenhos?","Hieróglifos","Cuneiforme","Alfabeto fenício","Runas"],
+  ["Como se chama o sistema político nascido em Atenas, em que os cidadãos votam as leis?","Democracia","Monarquia","Oligarquia","Tirania"],
+  ["Que imperador francês foi derrotado em Waterloo, em 1815?","Napoleão Bonaparte","Luís XIV","Carlos Magno","Júlio César"],
+  ["Como se chama o período da História entre a queda de Roma e o fim do século XV?","Idade Média","Pré-História","Idade Moderna","Antiguidade"],
+  ["Que povo construiu a cidade de Machu Picchu, nos Andes?","Os incas","Os maias","Os astecas","Os olmecas"],
+  ["Quem foi o primeiro presidente dos Estados Unidos da América?","George Washington","Abraham Lincoln","Thomas Jefferson","Benjamin Franklin"],
+  ["Que cientista descobriu a penicilina, em 1928?","Alexander Fleming","Louis Pasteur","Marie Curie","Robert Koch"],
+  ["Que navio afundou na sua viagem inaugural, em 1912?","Titanic","Britannic","Mayflower","Santa Maria"],
+  ["Que líder indiano lutou pela independência da Índia através da não-violência?","Mahatma Gandhi","Nehru","Buda","Rabindranath Tagore"],
+  ["Que líder sul-africano esteve preso 27 anos e depois foi presidente do seu país?","Nelson Mandela","Desmond Tutu","Kofi Annan","Martin Luther King"],
+  ["Que cientista ganhou dois Prémios Nobel e descobriu o rádio e o polónio?","Marie Curie","Rosalind Franklin","Ada Lovelace","Florence Nightingale"],
+  ["Que povo da Mesopotâmia inventou a escrita cuneiforme?","Os sumérios","Os egípcios","Os fenícios","Os persas"],
+  ["Que cidade-estado grega era famosa pela educação militar dos seus cidadãos?","Esparta","Atenas","Corinto","Tebas"],
+  ["Que general cartaginês atravessou os Alpes com elefantes para atacar Roma?","Aníbal","Alexandre, o Grande","Átila","Espártaco"],
+  ["Como se chama o movimento cultural que renasceu a Antiguidade, nascido em Itália no século XIV?","Renascimento","Iluminismo","Barroco","Romantismo"],
+  ["Que invento do século XV permitiu imprimir livros em grande número?","A imprensa de tipos móveis","O telescópio","A bússola","O relógio mecânico"],
+  ["Quem foi o primeiro ser humano a viajar no espaço, em 1961?","Yuri Gagarin","Neil Armstrong","Valentina Tereshkova","Alan Shepard"],
+  ["Quem escreveu «Dom Quixote de la Mancha»?","Miguel de Cervantes","William Shakespeare","Dante Alighieri","Victor Hugo"],
+  ["Quem escreveu «Romeu e Julieta»?","William Shakespeare","Charles Dickens","Molière","Oscar Wilde"],
+  // Artes
+  ["Quem compôs «As Quatro Estações»?","Antonio Vivaldi","Wolfgang Amadeus Mozart","Johann Sebastian Bach","Giuseppe Verdi"],
+  ["Quem compôs a Nona Sinfonia, com o «Hino à Alegria»?","Ludwig van Beethoven","Frédéric Chopin","Franz Schubert","Johannes Brahms"],
+  ["Quem pintou o tecto da Capela Sistina, no Vaticano?","Miguel Ângelo","Rafael","Leonardo da Vinci","Caravaggio"],
+  ["Quem pintou «Guernica»?","Pablo Picasso","Salvador Dalí","Joan Miró","Francisco Goya"],
+  ["Quem pintou «Os Girassóis»?","Vincent van Gogh","Claude Monet","Paul Gauguin","Edgar Degas"],
+  ["Em que cidade fica o Museu do Louvre?","Paris","Londres","Madrid","Roma"],
+  // Mitologia
+  ["Quem era a deusa grega da sabedoria?","Atena","Afrodite","Hera","Ártemis"],
+  ["Que deus grego governava os mares?","Poseidon","Zeus","Hades","Apolo"],
+  ["Quem era o rei dos deuses na mitologia grega?","Zeus","Apolo","Hermes","Ares"],
+  ["Que herói grego matou o Minotauro, no labirinto de Creta?","Teseu","Ulisses","Aquiles","Perseu"],
+  ["Que cidade foi invadida por gregos escondidos dentro de um grande cavalo de madeira?","Tróia","Esparta","Atenas","Cartago"],
+  ["Que herói grego tinha o calcanhar como único ponto fraco?","Aquiles","Heitor","Páris","Ájax"]
+);
+Q1112.push(
+  // Capitais
+  ["Qual é a capital da Argentina?","Buenos Aires","Montevideu","Santiago","Lima"],
+  ["Qual é a capital da Turquia?","Ancara","Istambul","Atenas","Bagdade"],
+  ["Qual é a capital de Marrocos?","Rabat","Casablanca","Marraquexe","Tânger"],
+  ["Qual é a capital do Quénia?","Nairobi","Mombaça","Adis Abeba","Kampala"],
+  ["Qual é a capital do Japão?","Tóquio","Quioto","Osaka","Seul"],
+  ["Qual é a capital da Coreia do Sul?","Seul","Pequim","Tóquio","Busan"],
+  ["Qual é a capital da Índia?","Nova Deli","Mumbai","Calcutá","Banguecoque"],
+  ["Qual é a capital da Rússia?","Moscovo","São Petersburgo","Minsk","Varsóvia"],
+  ["Qual é a capital da Roménia?","Bucareste","Budapeste","Sófia","Belgrado"],
+  ["Qual é a capital da Hungria?","Budapeste","Viena","Praga","Bucareste"],
+  ["Qual é a capital da República Checa?","Praga","Bratislava","Viena","Dresden"],
+  ["Qual é a capital da Suíça?","Berna","Zurique","Genebra","Basileia"],
+  ["Qual é a capital da Bélgica?","Bruxelas","Antuérpia","Bruges","Amesterdão"],
+  ["Qual é a capital da Noruega?","Oslo","Bergen","Estocolmo","Helsínquia"],
+  ["Qual é a capital da Finlândia?","Helsínquia","Estocolmo","Tallinn","Oslo"],
+  ["Qual é a capital da Dinamarca?","Copenhaga","Aarhus","Oslo","Berlim"],
+  ["Qual é a capital do Peru?","Lima","Cusco","Quito","Bogotá"],
+  ["Qual é a capital do Chile?","Santiago","Valparaíso","Lima","Caracas"],
+  ["Qual é a capital da Colômbia?","Bogotá","Medellín","Quito","Caracas"],
+  ["Qual é a capital de Cuba?","Havana","Santiago de Cuba","Kingston","Santo Domingo"],
+  ["Qual é a capital de Angola?","Luanda","Benguela","Huambo","Lobito"],
+  ["Qual é a capital de Moçambique?","Maputo","Beira","Nampula","Quelimane"],
+  ["Qual é a capital de Cabo Verde?","Praia","Mindelo","Sal Rei","Assomada"],
+  ["Qual é a capital de Timor-Leste?","Díli","Jacarta","Bangui","Manila"],
+  ["Qual é a capital da Nova Zelândia?","Wellington","Auckland","Camberra","Christchurch"],
+  ["Qual é a capital dos Estados Unidos da América?","Washington, D.C.","Nova Iorque","Los Angeles","Chicago"],
+  // Rios, mares, relevo
+  ["Qual é o rio mais caudaloso do mundo, na América do Sul?","Amazonas","Orinoco","Mississípi","Paraná"],
+  ["Que rio atravessa Paris?","Sena","Reno","Tamisa","Loire"],
+  ["Que rio atravessa Londres?","Tamisa","Sena","Tejo","Clyde"],
+  ["Qual é o rio que passa por Viena, Budapeste e Belgrado?","Danúbio","Reno","Elba","Volga"],
+  ["Qual é o rio mais comprido da Europa?","Volga","Danúbio","Reno","Tejo"],
+  ["Em que mar desagua o rio Nilo?","Mediterrâneo","Mar Vermelho","Mar Negro","Oceano Índico"],
+  ["Qual é o rio sagrado da Índia?","Ganges","Nilo","Mekong","Yangtzé"],
+  ["Que mar separa a Europa do Norte de África?","Mar Mediterrâneo","Mar Negro","Mar Báltico","Mar do Norte"],
+  ["Que mar fica entre o Egipto e a Arábia Saudita?","Mar Vermelho","Mar Morto","Mar Negro","Mar Cáspio"],
+  ["Qual é o menor oceano do mundo?","Árctico","Índico","Atlântico","Pacífico"],
+  ["Que cordilheira atravessa a América do Sul de norte a sul?","Andes","Alpes","Himalaias","Montanhas Rochosas"],
+  ["Que cordilheira separa a Península Ibérica do resto da Europa?","Pirenéus","Alpes","Cárpatos","Apeninos"],
+  ["Que montanha é a mais alta da Europa Ocidental, nos Alpes?","Monte Branco","Etna","Mulhacén","Matterhorn"],
+  ["Qual é o vulcão activo da Sicília?","Etna","Vesúvio","Teide","Fuji"],
+  ["Que vulcão destruiu a cidade romana de Pompeia?","Vesúvio","Etna","Krakatoa","Santorini"],
+  ["Qual é o canal que liga o Atlântico ao Pacífico, na América Central?","Canal do Panamá","Canal do Suez","Canal da Mancha","Canal de Corinto"],
+  ["Qual é o canal que liga o Mediterrâneo ao Mar Vermelho?","Canal do Suez","Canal do Panamá","Canal de Kiel","Estreito de Ormuz"],
+  ["Como se chama a linha imaginária que divide a Terra em hemisfério norte e hemisfério sul?","Equador","Meridiano de Greenwich","Trópico de Câncer","Círculo Polar Árctico"],
+  ["Que localidade inglesa dá o nome ao meridiano de referência?","Greenwich","Oxford","Liverpool","Manchester"],
+  ["Qual é o maior lago de África?","Lago Vitória","Lago Tanganica","Lago Chade","Lago Niassa"],
+  // Países e monumentos
+  ["Qual é o país mais pequeno do mundo?","Vaticano","Mónaco","Liechtenstein","San Marino"],
+  ["Qual é o único continente sem países?","Antárctida","Oceânia","Europa","Ártico"],
+  ["Em que país fica o monte Fuji?","Japão","China","Coreia do Sul","Filipinas"],
+  ["Em que país fica o Taj Mahal?","Índia","Paquistão","Irão","Tailândia"],
+  ["Em que país fica Machu Picchu?","Peru","México","Bolívia","Colômbia"],
+  ["Em que cidade fica o Cristo Redentor?","Rio de Janeiro","São Paulo","Lisboa","Salvador"],
+  ["Em que cidade fica a Sagrada Família, de Gaudí?","Barcelona","Madrid","Sevilha","Valência"],
+  ["Em que cidade fica o relógio Big Ben?","Londres","Edimburgo","Dublin","Manchester"],
+  ["Em que país fica o monte Kilimanjaro?","Tanzânia","Quénia","Etiópia","África do Sul"],
+  ["Em que continente fica o deserto de Gobi?","Ásia","África","América","Oceânia"],
+  ["Qual é o maior país de África em área?","Argélia","Nigéria","Egipto","África do Sul"],
+  ["Quantos países têm fronteira terrestre com Portugal?","1","2","3","0"],
+  ["Qual é o único país lusófono da Ásia?","Timor-Leste","Macau","Goa","Malásia"],
+  ["Quantos países fazem parte da CPLP, a Comunidade dos Países de Língua Portuguesa?","9","6","8","12"],
+  // Portugal
+  ["Qual é o maior rio que nasce e corre inteiramente em território português?","Mondego","Tejo","Douro","Guadiana"],
+  ["Qual é a maior albufeira de Portugal, no Alentejo?","Alqueva","Castelo do Bode","Cabora Bassa","Aguieira"],
+  ["Qual é o único parque nacional de Portugal?","Peneda-Gerês","Serra da Estrela","Arrábida","Ria Formosa"],
+  ["Que cabo é o ponto mais ocidental da Europa continental?","Cabo da Roca","Cabo de São Vicente","Cabo Espichel","Cabo Carvoeiro"],
+  ["Em que região de Portugal fica a Ria Formosa?","Algarve","Alentejo","Beira Litoral","Ribatejo"],
+  ["Que região do país é famosa pelo vinho verde?","Minho","Alentejo","Dão","Algarve"],
+  ["Que cidade portuguesa é conhecida como «Cidade Invicta»?","Porto","Braga","Lisboa","Coimbra"],
+  ["Que ilha da Madeira tem uma praia de areia dourada com nove quilómetros?","Porto Santo","Desertas","Selvagens","Pico"],
+  ["Em que ilha açoriana fica a Lagoa das Sete Cidades?","São Miguel","Flores","Santa Maria","São Jorge"],
+  ["Em que cidade fica a Torre dos Clérigos?","Porto","Lisboa","Guimarães","Viseu"]
+);
+Q1112.push(
+  // Biologia
+  ["Em que parte da célula está guardada a maior parte do ADN?","No núcleo","Na membrana","No citoplasma","Na parede celular"],
+  ["Que organito da célula é conhecido como a «central energética»?","Mitocôndria","Ribossoma","Núcleo","Vacúolo"],
+  ["Em que organito das células vegetais ocorre a fotossíntese?","Cloroplasto","Mitocôndria","Núcleo","Lisossoma"],
+  ["Que pigmento dá a cor verde às folhas?","Clorofila","Hemoglobina","Melanina","Caroteno"],
+  ["Que gás é libertado pelas plantas durante a fotossíntese?","Oxigénio","Dióxido de carbono","Azoto","Metano"],
+  ["Que células do sangue transportam o oxigénio?","Glóbulos vermelhos","Glóbulos brancos","Plaquetas","Plasma"],
+  ["Que células do sangue defendem o corpo contra infecções?","Glóbulos brancos","Glóbulos vermelhos","Plaquetas","Hemoglobina"],
+  ["Quantas cavidades tem o coração humano?","4","2","3","6"],
+  ["Qual é o órgão que produz a bílis?","Fígado","Pâncreas","Estômago","Baço"],
+  ["Quantos pares de cromossomas tem a espécie humana?","23","46","32","12"],
+  ["Que vitamina previne o escorbuto?","Vitamina C","Vitamina D","Vitamina A","Vitamina B12"],
+  ["Que parte do olho muda de tamanho conforme a quantidade de luz?","Pupila","Córnea","Retina","Cristalino"],
+  ["Que osso protege o cérebro?","Crânio","Omoplata","Esterno","Bacia"],
+  ["Que animal é um marsupial?","Canguru","Lémure","Preguiça","Pangolim"],
+  ["Qual é o único mamífero capaz de voar?","Morcego","Esquilo-voador","Pinguim","Colibri"],
+  ["A que grupo de vertebrados pertence a salamandra?","Anfíbios","Répteis","Mamíferos","Peixes"],
+  ["Como se chama a transformação de uma lagarta em borboleta?","Metamorfose","Fotossíntese","Hibernação","Migração"],
+  ["Qual destes animais é um invertebrado?","Polvo","Tubarão","Salmão","Sapo"],
+  ["Como se chama o animal que se alimenta de plantas e de animais?","Omnívoro","Herbívoro","Carnívoro","Decompositor"],
+  ["Numa cadeia alimentar, que seres são os produtores?","As plantas","Os lobos","Os fungos","As águias"],
+  ["Como se chama a pequena estrutura que dá origem a uma nova planta?","Semente","Raiz","Pétala","Folha"],
+  ["Que processo permite às plantas libertar vapor de água pelas folhas?","Transpiração","Germinação","Polinização","Respiração celular"],
+  ["Que insecto é o principal responsável pela polinização de muitas flores?","Abelha","Mosquito","Barata","Formiga-cortadeira"],
+  // Química
+  ["Qual é o símbolo químico do ouro?","Au","Ag","Or","Go"],
+  ["Qual é o símbolo químico do sódio?","Na","So","S","Sd"],
+  ["Qual é o símbolo químico do ferro?","Fe","Fr","F","Ir"],
+  ["Qual é o símbolo químico do potássio?","K","P","Po","Pt"],
+  ["Qual é o símbolo químico do hélio?","He","H","Hl","Ho"],
+  ["Qual é a fórmula química da água?","H₂O","HO₂","H₂O₂","OH"],
+  ["Qual é a fórmula química do dióxido de carbono?","CO₂","CO","C₂O","O₂C₂"],
+  ["Qual é o nome químico do sal de cozinha?","Cloreto de sódio","Carbonato de cálcio","Bicarbonato de sódio","Sulfato de cobre"],
+  ["Que gás nobre é usado para encher balões que flutuam?","Hélio","Oxigénio","Árgon","Azoto"],
+  ["Qual é o valor de pH de uma substância neutra, como a água pura?","7","0","1","14"],
+  ["Como se chama a passagem do estado sólido ao estado líquido?","Fusão","Solidificação","Sublimação","Condensação"],
+  ["Como se chama a passagem do estado gasoso ao líquido?","Condensação","Evaporação","Fusão","Ebulição"],
+  ["Que gás é indispensável para uma chama arder?","Oxigénio","Azoto","Hélio","Néon"],
+  ["O que é preciso, além do ferro, para que ele enferruje?","Oxigénio e água","Só frio","Só luz","Hélio"],
+  ["Qual é o elemento químico mais abundante no Universo?","Hidrogénio","Oxigénio","Carbono","Ferro"],
+  ["Qual é o elemento químico de símbolo Ag?","Prata","Argónio","Alumínio","Ouro"],
+  // Física
+  ["Qual é a unidade de medida da força, no Sistema Internacional?","Newton","Joule","Watt","Pascal"],
+  ["Qual é a unidade de medida da energia, no Sistema Internacional?","Joule","Newton","Watt","Volt"],
+  ["Qual é a unidade de potência eléctrica?","Watt","Volt","Ampere","Ohm"],
+  ["Que aparelho mede a intensidade de uma força?","Dinamómetro","Barómetro","Higrómetro","Amperímetro"],
+  ["Qual é, aproximadamente, a velocidade da luz no vácuo?","300 000 km por segundo","300 km por segundo","30 000 km por hora","3 000 km por segundo"],
+  ["O som propaga-se no vácuo?","Não","Sim, mais depressa do que no ar","Sim, mas mais devagar","Só se for muito forte"],
+  ["Que fenómeno da luz forma o arco-íris?","Dispersão da luz","Reflexão total","Absorção","Eclipse"],
+  ["Que cor se obtém ao juntar todas as cores da luz?","Branco","Preto","Cinzento","Castanho"],
+  ["Qual destes materiais é um bom condutor eléctrico?","Cobre","Borracha","Madeira seca","Vidro"],
+  ["Como se chama a força que nos mantém presos ao chão?","Gravidade","Magnetismo","Atrito","Inércia"],
+  ["Como se chama a mudança de direcção da luz ao passar do ar para a água?","Refracção","Reflexão","Difracção","Dispersão"],
+  ["Que fonte de energia renovável aproveita o vento?","Energia eólica","Energia nuclear","Energia fóssil","Energia geotérmica"],
+  ["Que tipo de energia é obtida com painéis fotovoltaicos?","Energia solar","Energia hídrica","Energia eólica","Biomassa"],
+  ["Qual destes combustíveis é um combustível fóssil?","Petróleo","Lenha","Etanol","Hidrogénio"],
+  // Astronomia e Terra
+  ["Que planeta tem uma enorme tempestade chamada Grande Mancha Vermelha?","Júpiter","Marte","Saturno","Neptuno"],
+  ["Qual é o planeta mais quente do Sistema Solar?","Vénus","Mercúrio","Marte","Júpiter"],
+  ["Quanto tempo demora a luz do Sol a chegar à Terra?","Cerca de 8 minutos","Cerca de 8 segundos","Cerca de 8 horas","Cerca de 1 dia"],
+  ["Qual foi o primeiro satélite artificial lançado para o espaço, em 1957?","Sputnik","Apollo","Voyager","Hubble"],
+  ["Que cientista descobriu, com um telescópio, quatro luas de Júpiter?","Galileu Galilei","Isaac Newton","Johannes Kepler","Nicolau Copérnico"],
+  ["Qual é o maior satélite natural de Saturno?","Titã","Europa","Ganimedes","Tritão"],
+  ["Qual é a camada mais externa e fina do planeta Terra?","Crosta","Manto","Núcleo externo","Núcleo interno"],
+  ["Que escala mede a intensidade dos sismos?","Escala de Richter","Escala de Celsius","Escala de Beaufort","Escala de Mohs"],
+  ["Que nome tem a camada da atmosfera onde ocorrem as nuvens e o estado do tempo?","Troposfera","Estratosfera","Mesosfera","Exosfera"],
+  ["Qual é o gás mais abundante na atmosfera da Terra?","Azoto","Oxigénio","Dióxido de carbono","Árgon"],
+  ["O que provoca as estações do ano?","A inclinação do eixo da Terra","A distância à Lua","As manchas solares","A rotação da Lua"],
+  ["Como se chama a rocha que se forma quando o magma arrefece?","Rocha magmática","Rocha sedimentar","Rocha metamórfica","Calcário"]
+);
+Q1112.push(
+  // Matemática
+  ["Qual é o valor aproximado de π (pi), com duas casas decimais?","3,14","3,41","2,71","3,28"],
+  ["Quantos graus tem uma volta completa de um círculo?","360","180","90","270"],
+  ["Qual é o máximo divisor comum de 12 e 18?","6","3","9","2"],
+  ["Qual é o mínimo múltiplo comum de 4 e 6?","12","24","10","8"],
+  ["Que triângulo tem os três lados iguais?","Equilátero","Isósceles","Escaleno","Rectângulo"],
+  ["Que triângulo tem exactamente dois lados iguais?","Isósceles","Equilátero","Escaleno","Acutângulo"],
+  ["Como se chama um ângulo com mais de 90° e menos de 180°?","Obtuso","Agudo","Recto","Raso"],
+  ["Qual é a soma dos ângulos internos de um quadrilátero?","360°","180°","270°","540°"],
+  ["Que teorema relaciona os lados de um triângulo rectângulo?","Teorema de Pitágoras","Teorema de Tales","Teorema de Euclides","Teorema de Fermat"],
+  ["Quantas arestas tem um cubo?","12","6","8","10"],
+  ["Quantos vértices tem uma pirâmide de base quadrada?","5","4","6","8"],
+  ["Qual é o único número primo que é par?","2","4","0","6"],
+  ["Quantos números primos há entre 1 e 10?","4","3","5","6"],
+  ["Que número representa a letra M na numeração romana?","1000","500","100","50"],
+  ["Qual é o simétrico de −7?","7","−1/7","0","1/7"],
+  ["Quanto é −3 + 8?","5","−5","11","−11"],
+  ["Como se escreve 0,25 em fracção?","1/4","1/2","2/5","1/5"],
+  ["Qual destas fracções é equivalente a 2/3?","4/6","3/4","2/6","6/4"],
+  ["Quantas diagonais tem um quadrado?","2","1","4","0"],
+  ["Qual é o perímetro de um quadrado com 9 cm de lado?","36 cm","18 cm","81 cm","27 cm"],
+  ["Quantos centímetros cúbicos tem um litro?","1000","100","10","10 000"],
+  ["Quantos metros tem um quilómetro?","1000","100","10 000","500"],
+  // Língua portuguesa
+  ["Em «O Pedro comeu a maçã», qual é o sujeito?","O Pedro","Comeu","A maçã","Maçã"],
+  ["Qual é a classe de palavras de «felizmente»?","Advérbio","Adjectivo","Verbo","Nome"],
+  ["Qual é o contrário de «escasso»?","Abundante","Pequeno","Raro","Fraco"],
+  ["Qual é o grau superlativo absoluto sintético de «bom»?","Óptimo","Melhor","Muito bom","Mais bom"],
+  ["Que figura de estilo há em «o mar é um espelho»?","Metáfora","Hipérbole","Personificação","Ironia"],
+  ["Que figura de estilo há em «chorou rios de lágrimas»?","Hipérbole","Comparação","Metáfora","Pleonasmo"],
+  ["Qual destas palavras é um pronome pessoal?","Nós","Casa","Feliz","Correr"],
+  ["Em que tempo está o verbo em «comerei»?","Futuro","Presente","Pretérito perfeito","Pretérito imperfeito"],
+  ["Qual é o sinal de pontuação que se usa antes de uma enumeração?","Dois pontos","Ponto final","Ponto de exclamação","Reticências"],
+  ["Qual é o nome dado a duas palavras com o mesmo significado, como «bonito» e «belo»?","Sinónimos","Antónimos","Homónimos","Parónimos"],
+  // Desporto
+  ["De quantos em quantos anos se realizam os Jogos Olímpicos de Verão?","4","2","3","5"],
+  ["Quantos quilómetros tem, aproximadamente, uma maratona?","42","21","10","100"],
+  ["Quantos jogadores de cada equipa estão em campo num jogo de voleibol?","6","5","7","11"],
+  ["Em que país nasceram os Jogos Olímpicos da Antiguidade?","Grécia","Itália","Egipto","França"],
+  ["Em que ano Portugal venceu o Campeonato da Europa de Futebol?","2016","2004","2012","2008"],
+  ["Em que cidade se realizaram os Jogos Olímpicos de 2016?","Rio de Janeiro","Pequim","Londres","Tóquio"],
+  ["Em que desporto se disputa o torneio de Roland Garros?","Ténis","Golfe","Ciclismo","Esgrima"],
+  // Tecnologia e inventores
+  ["Quem inventou o telefone?","Alexander Graham Bell","Thomas Edison","Nikola Tesla","Guglielmo Marconi"],
+  ["Que irmãos construíram o primeiro avião a motor?","Irmãos Wright","Irmãos Lumière","Irmãos Grimm","Irmãos Montgolfier"],
+  ["Quantos bits tem um byte?","8","4","16","10"],
+  ["Qual é a sigla da linguagem usada para criar páginas da Internet?","HTML","PDF","USB","GPS"],
+  ["Quem criou a World Wide Web?","Tim Berners-Lee","Bill Gates","Steve Jobs","Alan Turing"],
+  ["Que cientista britânico, um dos pais da computação, ajudou a decifrar o código Enigma na Segunda Guerra Mundial?","Alan Turing","Isaac Newton","Charles Darwin","Stephen Hawking"],
+  // Mundo
+  ["Qual é a moeda do Reino Unido?","Libra esterlina","Euro","Dólar","Franco"],
+  ["Qual é a moeda dos Estados Unidos da América?","Dólar","Libra","Peso","Euro"],
+  ["Que organização, com sede em Nova Iorque, reúne quase todos os países do mundo?","ONU","NATO","UEFA","UNICEF"],
+  ["Em que continente fica Moçambique?","África","Ásia","América","Oceânia"],
+  ["Qual é a língua oficial de Angola?","Português","Francês","Espanhol","Inglês"]
+);
+Q56.push(
+  // Sons e animais
+  ["Que animal faz «au au»?","🐶","🐱","🐮","🐸"],
+  ["Que animal faz «miau»?","🐱","🐶","🐷","🐔"],
+  ["Que animal faz «muuu»?","🐮","🐑","🐴","🦆"],
+  ["Que animal faz «quá quá»?","🦆","🐔","🐷","🐴"],
+  ["Que animal faz «croac croac»?","🐸","🐶","🐱","🐮"],
+  ["Que animal faz «bzzz»?","🐝","🐢","🐘","🐟"],
+  ["Que animal faz «ssss»?","🐍","🐶","🐑","🐮"],
+  ["Que animal ruge bem alto?","🦁","🐰","🐭","🐥"],
+  ["Que animal faz «piu piu»?","🐥","🐮","🐘","🐶"],
+  ["Que animal voa à noite e dorme de dia?","🦇","🐶","🐟","🐰"],
+  ["Que animal tem juba?","🦁","🐘","🐒","🐄"],
+  ["Que animal tem espinhos nas costas?","🦔","🐰","🐭","🐱"],
+  ["Que animal tem uma carapaça?","🐢","🐶","🐦","🐟"],
+  ["Que animal tem bico?","🦆","🐶","🐱","🐮"],
+  ["Que animal tem manchas pretas nas costas vermelhas?","🐞","🐝","🦋","🐜"],
+  ["Que animal come cenouras?","🐰","🐟","🐊","🐍"],
+  ["Que animal gosta de queijo?","🐭","🐘","🐟","🦒"],
+  ["Que animal gosta de peixe e de leite?","🐱","🐢","🐘","🐸"],
+  ["Qual destes animais é muito lento?","🐌","🐆","🐎","🐇"],
+  ["Qual destes animais é muito rápido?","🐆","🐢","🐌","🐘"],
+  ["Qual destes animais é o maior?","🐘","🐭","🐞","🐸"],
+  ["Qual destes animais pode voar?","🦅","🐶","🐢","🐘"],
+  ["Qual destes animais pode nadar debaixo de água?","🐟","🐔","🐰","🐴"],
+  // Comida
+  ["Qual é a fruta amarela e azeda?","🍋","🍓","🍇","🍎"],
+  ["Qual é o legume cor de laranja?","🥕","🍆","🥦","🌽"],
+  ["Qual é o alimento feito com leite?","🧀","🍞","🍎","🥕"],
+  ["O que nos dá a galinha?","🥚","🥛","🧀","🍯"],
+  ["Qual é a bebida que as vacas nos dão?","🥛","🍊","🍷","🧃"],
+  ["Qual é o alimento redondo com queijo e tomate?","🍕","🍞","🍰","🍙"],
+  ["Qual destes alimentos cresce debaixo da terra?","🥔","🍎","🍌","🍓"],
+  ["Qual destes é um legume verde?","🥦","🍒","🍓","🍋"],
+  ["Qual destes é um doce de aniversário?","🎂","🍞","🥕","🧅"],
+  ["Qual destes alimentos é pão?","🍞","🧀","🍩","🍗"],
+  ["Qual destes alimentos é frio e se come no Verão?","🍦","🍲","🍳","☕"],
+  ["Qual é a fruta que tem um caroço grande e é vermelha?","🍒","🍌","🍋","🍍"],
+  // Objectos e profissões
+  ["O que usamos para cortar papel?","✂️","🥄","🧦","🎈"],
+  ["O que usamos para ouvir música?","🎧","🥄","🧦","🔨"],
+  ["O que usamos para telefonar?","📱","🍴","🧦","🧸"],
+  ["O que usamos para abrir uma porta?","🔑","🥄","🎈","🧦"],
+  ["O que usamos para varrer o chão?","🧹","🍴","📚","🎈"],
+  ["O que pomos nos pés?","👟","🧢","🧤","👓"],
+  ["O que pomos na cabeça para nos proteger do sol?","🧢","👟","🧤","🧦"],
+  ["O que usamos para levar os livros para a escola?","🎒","🥄","🧦","🔑"],
+  ["Qual destes é um livro?","📕","🍴","🧦","🎈"],
+  ["Onde guardamos as moedas que poupamos?","🐷","🥄","🚗","🍎"],
+  ["O que usamos para lavar as mãos?","🧼","🎈","🥄","👟"],
+  ["O que usamos para ver estrelas ao longe?","🔭","🥄","🧦","🍴"],
+  // Transportes
+  ["Qual é o veículo que leva muita gente na estrada?","🚌","🚲","🚁","🚀"],
+  ["Qual é o veículo da polícia?","🚓","🚑","🚒","🚜"],
+  ["Qual é o veículo que leva os doentes ao hospital?","🚑","🚒","🚜","🚲"],
+  ["Qual é o veículo que sobe ao espaço?","🚀","🚗","🚲","⛵"],
+  ["Qual é o veículo com hélices no tecto que voa?","🚁","🚌","🚂","🚗"],
+  ["Qual é o veículo que trabalha nos campos?","🚜","🚑","🚓","🚌"],
+  // Natureza e tempo
+  ["Qual é o desenho de um dia de chuva?","🌧️","☀️","🌈","❄️"],
+  ["Qual é o desenho de um dia de neve?","❄️","☀️","🌧️","🔥"],
+  ["Qual é o arco-íris?","🌈","☀️","🌙","☁️"],
+  ["Qual é a nuvem?","☁️","☀️","🌙","⭐"],
+  ["Qual é o vulcão?","🌋","🏔️","🏖️","🌳"],
+  ["Qual é a praia?","🏖️","🏔️","🌋","🏜️"],
+  ["Onde há muita areia e camelos?","🏜️","🌋","🏖️","🌳"],
+  ["Qual é a flor amarela que segue o Sol?","🌻","🌹","🍄","🌵"],
+  ["Qual destes é uma árvore?","🌳","🌹","🍄","🌻"],
+  ["Qual destes mostra vento?","💨","🔥","🌈","🥄"],
+  // Corpo e sentimentos
+  ["Com que parte do corpo vemos?","👁️","👂","👃","👄"],
+  ["Com que parte do corpo ouvimos?","👂","👁️","👃","🦶"],
+  ["Com que parte do corpo cheiramos?","👃","👂","👁️","✋"],
+  ["Com que parte do corpo falamos e comemos?","👄","👂","👃","👁️"],
+  ["Qual é a cara feliz?","😀","😢","😠","😴"],
+  ["Qual é a cara triste?","😢","😀","😴","😎"],
+  ["Qual é a cara zangada?","😠","😀","😢","😴"],
+  ["Qual é a cara de quem está a dormir?","😴","😀","😠","😮"],
+  // Formas, festas e brincadeiras
+  ["Qual é o quadrado?","🟦","🔴","🔺","⭐"],
+  ["Qual é o coração?","❤️","🔵","🔺","🟨"],
+  ["Quem traz os presentes no Natal?","🎅","🐰","🐶","🧙"],
+  ["Qual é a árvore de Natal?","🎄","🌳","🌵","🌻"],
+  ["O que se abre no Natal ou nos anos?","🎁","🥄","🎈","🧦"],
+  ["Qual é a bola de futebol?","⚽","🏀","🎾","🏈"],
+  ["Qual é a bola de ténis?","🎾","⚽","🏀","🏈"],
+  ["Qual é o instrumento com teclas pretas e brancas?","🎹","🥁","🎸","🎺"],
+  ["Qual é o instrumento que se toca com baquetas?","🥁","🎹","🎻","🎺"],
+  ["Qual é o instrumento que se toca com um arco?","🎻","🥁","🎺","🎹"],
+  ["Qual é a princesa?","👸","🐉","👻","🎅"],
+  ["Qual é o dragão?","🐉","👸","👻","🐘"]
+);
+Q56.push(
+  // Cores e formas
+  ["De que cor é a banana madura?","Amarela","Azul","Roxa","Preta"],
+  ["De que cor é o céu num dia limpo?","Azul","Verde","Vermelho","Castanho"],
+  ["De que cor é a relva?","Verde","Roxa","Cor-de-rosa","Branca"],
+  ["De que cor é o leite?","Branco","Azul","Verde","Preto"],
+  ["De que cor é um tomate maduro?","Vermelho","Azul","Roxo","Branco"],
+  ["Que cor sai quando misturamos azul com amarelo?","Verde","Laranja","Roxo","Preto"],
+  ["Que cor sai quando misturamos vermelho com amarelo?","Laranja","Verde","Azul","Cinzento"],
+  ["Quantos lados tem um triângulo?","3","4","5","2"],
+  ["Quantos lados tem um quadrado?","4","3","5","6"],
+  ["Que forma tem uma bola?","Redonda","Quadrada","Triangular","Comprida"],
+  ["Que forma tem uma janela normal?","Rectangular","Redonda","Triangular","Em estrela"],
+  // Corpo
+  ["Quantos olhos temos?","2","1","3","4"],
+  ["Quantos dedos tem uma mão?","5","4","6","10"],
+  ["Quantas orelhas temos?","2","1","3","4"],
+  ["Quantas pernas tem uma pessoa?","2","1","3","4"],
+  ["Para que servem os dentes?","Para mastigar","Para ouvir","Para cheirar","Para ver"],
+  ["Com que parte do corpo andamos?","Com os pés","Com as mãos","Com as orelhas","Com o nariz"],
+  ["O que devemos fazer aos dentes todos os dias?","Escová-los","Pintá-los","Cortá-los","Molhá-los só ao domingo"],
+  ["O que devemos fazer antes de comer?","Lavar as mãos","Correr","Dormir","Pintar"],
+  // Animais
+  ["Quantas patas tem um cão?","4","2","6","8"],
+  ["Quantas patas tem uma galinha?","2","4","6","8"],
+  ["Qual é a casa do cão?","Casota","Ninho","Toca","Aquário"],
+  ["Onde vive o peixe?","Na água","Na árvore","No deserto","No ninho"],
+  ["Onde põe a ave os seus ovos?","No ninho","Na água","Na casota","No frigorífico"],
+  ["Como se chama o filho da gata?","Gatinho","Cachorro","Pintainho","Vitelo"],
+  ["Como se chama o filho do cão?","Cachorro","Gatinho","Cabrito","Leitão"],
+  ["Como se chama o filho da galinha?","Pintainho","Cachorro","Potro","Vitelo"],
+  ["Que animal nos dá o mel?","A abelha","A formiga","A aranha","A mosca"],
+  ["Que animal tem a tromba grande?","O elefante","O coelho","O gato","O pato"],
+  ["Que animal pula e tem uma bolsa na barriga?","Canguru","Pato","Peixe","Cavalo"],
+  ["Que animal preto e branco vive no gelo e não voa?","Pinguim","Papagaio","Pardal","Galinha"],
+  ["Qual é o rei da selva?","Leão","Coelho","Rato","Pato"],
+  ["Que animal é grande, cinzento e vive na água, mas não é peixe?","Baleia","Sardinha","Truta","Atum"],
+  // Números e tempo
+  ["Que número vem depois do 5?","6","4","7","8"],
+  ["Que número vem antes do 10?","9","8","11","1"],
+  ["Quanto é 2 + 2?","4","3","5","6"],
+  ["Quanto é 3 + 3?","6","5","7","9"],
+  ["Quanto é 5 − 2?","3","2","4","7"],
+  ["Quanto é 10 − 5?","5","4","6","15"],
+  ["Quantos dias tem uma semana?","7","5","6","10"],
+  ["Qual é o primeiro dia da semana, segundo o calendário?","Segunda-feira","Domingo","Sábado","Quarta-feira"],
+  ["Em que dia da semana costumamos ficar em casa sem escola?","Sábado","Terça-feira","Quinta-feira","Sexta-feira"],
+  ["Quantos meses tem um ano?","12","10","7","20"],
+  ["Em que estação do ano faz mais calor?","Verão","Inverno","Outono","Primavera"],
+  ["Em que estação do ano faz mais frio?","Inverno","Verão","Primavera","Outono"],
+  ["Em que estação do ano as flores nascem?","Primavera","Inverno","Outono","Verão"],
+  ["Quando vemos a Lua e as estrelas?","De noite","De manhã","Ao meio-dia","Ao pequeno-almoço"],
+  ["O que aparece no céu de dia e dá luz e calor?","O Sol","A Lua","As estrelas","Um cometa"],
+  // Casa, escola, família
+  ["Onde cozinhamos a comida?","Na cozinha","No quarto","Na garagem","No jardim"],
+  ["Onde tomamos banho?","Na casa de banho","Na cozinha","No quarto","Na sala"],
+  ["Quem nos ensina na escola?","O professor","O padeiro","O bombeiro","O carteiro"],
+  ["Quem apaga os fogos?","O bombeiro","O padeiro","O pintor","O cozinheiro"],
+  ["Quem faz o pão?","O padeiro","O médico","O polícia","O pintor"],
+  ["Quem trata dos nossos dentes?","O dentista","O padeiro","O jardineiro","O pescador"],
+  ["Quem trata de nós quando estamos doentes?","O médico","O pescador","O pedreiro","O pintor"],
+  ["Quem traz as cartas a casa?","O carteiro","O bombeiro","O padeiro","O dentista"],
+  ["Quem é a mãe da tua mãe?","A avó","A tia","A prima","A irmã"],
+  ["Quem é o filho dos teus pais?","O irmão","O avô","O tio","O vizinho"],
+  ["O que usamos para escrever no caderno?","Lápis","Colher","Meia","Chinelo"],
+  ["O que usamos para comer sopa?","Colher","Garfo","Faca","Palhinha"],
+  ["O que usamos para beber água?","Copo","Prato","Garfo","Chapéu"],
+  ["Que objecto nos mostra as horas?","Relógio","Colher","Chapéu","Sapato"],
+  ["Que peça de roupa usamos quando chove?","Impermeável","Biquíni","Chinelos","Cachecol de lã"],
+  ["O que levamos quando vamos à praia?","Chapéu de sol","Luvas","Gorro","Cachecol"],
+  // Portugal e mundo
+  ["Qual é o nome do nosso país?","Portugal","França","Espanha","Brasil"],
+  ["Qual é a capital de Portugal?","Lisboa","Porto","Coimbra","Faro"],
+  ["De que cores é a bandeira de Portugal?","Verde e vermelho","Azul e branco","Preto e amarelo","Laranja e azul"],
+  ["Que língua falamos em Portugal?","Português","Inglês","Francês","Alemão"],
+  ["Que bolo típico de Lisboa tem creme e canela?","Pastel de nata","Bolo-rei","Bola de Berlim","Pão de ló"],
+  ["Que ave de Portugal gosta de fazer ninho nas torres e nos telhados?","Cegonha","Pinguim","Papagaio","Avestruz"],
+  ["Que cidade portuguesa tem uma ponte grande e vermelha parecida com a de São Francisco?","Lisboa","Faro","Évora","Viseu"],
+  ["Quem é a personagem de madeira que cresce o nariz quando mente?","Pinóquio","Peter Pan","Pateta","Aladino"],
+  ["Qual é o nome do rato famoso da Disney?","Mickey","Tom","Jerry","Garfield"],
+  ["Qual é o conto em que uma menina leva doces à avó e encontra um lobo?","Capuchinho Vermelho","Branca de Neve","Cinderela","Bela Adormecida"],
+  ["Quantos anões acompanham a Branca de Neve?","7","3","5","12"],
+  ["Em que conto aparece uma sapatilha de cristal?","Cinderela","Pinóquio","Rapunzel","Peter Pan"],
+  ["O que fazem os três porquinhos para se protegerem do lobo?","Constroem casas","Fogem para o mar","Escondem-se na floresta","Tocam flauta"]
+);
+Q78.push(
+  // Animais
+  ["Qual é o animal terrestre mais rápido?","Chita","Leão","Cavalo","Gazela"],
+  ["Qual é o animal mais pesado do mundo?","Baleia-azul","Elefante","Rinoceronte","Hipopótamo"],
+  ["Como se chamam os animais que alimentam as crias com leite?","Mamíferos","Répteis","Anfíbios","Insectos"],
+  ["Que animais têm o corpo coberto de penas?","Aves","Répteis","Peixes","Anfíbios"],
+  ["Como se chama a casa do coelho?","Toca","Ninho","Colmeia","Curral"],
+  ["Que animal leva as crias numa bolsa na barriga?","Canguru","Coelho","Esquilo","Urso"],
+  ["O que come a rã, principalmente?","Insectos","Folhas","Peixes grandes","Sementes"],
+  ["Que animal é um réptil e muda de pele?","Cobra","Sapo","Rato","Pato"],
+  ["Qual destes animais é uma ave que não voa?","Pinguim","Cegonha","Águia","Pardal"],
+  ["Qual destes animais é um peixe?","Cavalo-marinho","Golfinho","Baleia","Foca"],
+  ["Qual destes animais é um mamífero?","Morcego","Pinguim","Cobra","Salamandra"],
+  ["Qual destes animais vive no deserto?","Camelo","Pinguim","Urso-polar","Foca"],
+  ["Qual destes animais vive no Pólo Norte?","Urso-polar","Pinguim","Leão-marinho","Gorila"],
+  ["Quantas patas tem uma aranha?","8","6","4","10"],
+  ["Quantas patas tem um caranguejo?","10","6","8","4"],
+  ["Em que se transforma uma lagarta?","Em borboleta","Em abelha","Em escaravelho","Em libelinha"],
+  ["Qual é a ave que simboliza a paz?","Pomba","Águia","Coruja","Gaivota"],
+  ["Como se chama o animal macho da galinha?","Galo","Pato","Peru","Pombo"],
+  ["Qual é o animal que dá lã?","Ovelha","Cavalo","Porca","Vaca"],
+  ["Como se chama a cria da vaca?","Vitelo","Cabrito","Potro","Borrego"],
+  ["Como se chama a cria da ovelha?","Borrego","Vitelo","Leitão","Pintainho"],
+  // Plantas e alimentos
+  ["O que precisam as plantas para crescer?","Água, luz e ar","Só sombra","Só areia","Só gelo"],
+  ["Como se chama a parte da planta que fica debaixo da terra?","Raiz","Folha","Flor","Fruto"],
+  ["De que parte da planta nascem os frutos?","Das flores","Das raízes","Das folhas","Do caule"],
+  ["Qual destes alimentos é a raiz de uma planta?","Cenoura","Alface","Laranja","Pimento"],
+  ["Qual destes alimentos é uma folha?","Alface","Cenoura","Batata","Cebola"],
+  ["De que fruto se faz o vinho?","Uva","Maçã","Pêra","Cereja"],
+  ["Qual é a planta que tem espinhos e vive no deserto?","Cacto","Feto","Hera","Girassol"],
+  ["Que árvore dá castanhas?","Castanheiro","Pinheiro","Laranjeira","Salgueiro"],
+  ["Que árvore dá azeitonas?","Oliveira","Figueira","Cerejeira","Amendoeira"],
+  ["Que flor vira sempre o rosto para o Sol?","Girassol","Rosa","Tulipa","Cravo"],
+  ["Qual é o alimento que nos dá muito cálcio, importante para os ossos?","Leite","Arroz","Açúcar","Batata frita"],
+  ["Que fruta é rica em vitamina C?","Laranja","Banana","Pêra","Melancia"],
+  // Corpo humano
+  ["Quantos sentidos temos?","5","3","4","6"],
+  ["Que sentido usamos com o nariz?","Olfacto","Visão","Audição","Paladar"],
+  ["Quantos dedos temos nas mãos e nos pés, ao todo?","20","10","15","24"],
+  ["Para que servem os dentes?","Para mastigar","Para respirar","Para ouvir","Para cheirar"],
+  ["Que órgão usamos para pensar e guardar memórias?","Cérebro","Estômago","Fígado","Rim"],
+  ["Quantas horas devem dormir, por noite, as crianças da tua idade?","Cerca de 10","Cerca de 4","Cerca de 6","Cerca de 14"],
+  // Terra, espaço e tempo
+  ["Qual é o maior planeta do Sistema Solar?","Júpiter","Terra","Saturno","Marte"],
+  ["Qual é o planeta conhecido como «Planeta Vermelho»?","Marte","Vénus","Mercúrio","Júpiter"],
+  ["Qual é o planeta que tem anéis muito visíveis?","Saturno","Marte","Mercúrio","Terra"],
+  ["Quantas luas tem a Terra?","1","2","0","8"],
+  ["O Sol é…","Uma estrela","Um planeta","Um satélite","Um cometa"],
+  ["Que fenómeno da natureza traz relâmpagos e trovões?","Trovoada","Nevoeiro","Geada","Orvalho"],
+  ["Que estação do ano tem os dias mais longos?","Verão","Inverno","Outono","Primavera"],
+  ["Em que estação do ano as árvores de folha caduca perdem as folhas?","Outono","Verão","Primavera","Inverno"],
+  ["Quantas cores costumam contar-se no arco-íris?","7","5","9","12"],
+  ["O que é um iceberg?","Um grande bloco de gelo a flutuar no mar","Uma montanha de areia","Uma nuvem de gelo","Um rio gelado"],
+  ["Qual destes materiais é transparente?","Vidro","Madeira","Ferro","Cartão"],
+  ["Qual destes materiais flutua na água?","Madeira","Pedra","Ferro","Vidro"],
+  ["Que energia usa um moinho de vento para trabalhar?","Vento","Água","Fogo","Sol"],
+  ["Que aparelho mede a temperatura?","Termómetro","Balança","Régua","Relógio"]
+);
+Q78.push(
+  // Portugal
+  ["Quais são as cores da bandeira de Portugal?","Verde e vermelho","Azul e branco","Verde e amarelo","Vermelho e preto"],
+  ["Que animal é o símbolo do Sport Lisboa e Benfica?","Águia","Leão","Dragão","Lobo"],
+  ["Que animal é o símbolo do Sporting Clube de Portugal?","Leão","Águia","Dragão","Gato"],
+  ["Que animal é o símbolo do Futebol Clube do Porto?","Dragão","Águia","Leão","Lobo"],
+  ["Qual é a capital do Algarve?","Faro","Portimão","Lagos","Tavira"],
+  ["Em que cidade fica o Estádio da Luz?","Lisboa","Porto","Braga","Setúbal"],
+  ["Que rio passa na cidade de Lisboa?","Tejo","Douro","Mondego","Guadiana"],
+  ["Que rio passa na cidade do Porto?","Douro","Tejo","Minho","Sado"],
+  ["Em que serra costuma haver neve no Inverno, em Portugal?","Serra da Estrela","Serra de Sintra","Serra da Arrábida","Serra de Monchique"],
+  ["Como se chama o hino de Portugal?","A Portuguesa","Os Lusíadas","Grândola, Vila Morena","Hino da Alegria"],
+  ["Quais são as duas regiões autónomas de Portugal?","Açores e Madeira","Algarve e Alentejo","Minho e Douro","Açores e Algarve"],
+  ["Em que ilha nasceu Cristiano Ronaldo?","Madeira","São Miguel","Porto Santo","Terceira"],
+  ["Qual é a língua oficial de Moçambique?","Português","Inglês","Francês","Espanhol"],
+  ["Quantos dias tem Fevereiro num ano normal?","28","29","30","31"],
+  ["Que data se celebra a 1 de Janeiro?","Ano Novo","Natal","Páscoa","Dia da Mãe"],
+  // Mundo
+  ["Em que país fica a Torre Eiffel?","França","Itália","Espanha","Bélgica"],
+  ["Em que país fica a Estátua da Liberdade?","Estados Unidos da América","Reino Unido","França","Canadá"],
+  ["Em que país fica o relógio Big Ben?","Reino Unido","Irlanda","França","Estados Unidos da América"],
+  ["Em que país fica a cidade do Cairo?","Egipto","Marrocos","Arábia Saudita","Índia"],
+  ["Em que país fica a cidade do Rio de Janeiro?","Brasil","Portugal","Argentina","México"],
+  ["Qual é o continente mais frio do mundo?","Antárctida","Europa","Ásia","América do Sul"],
+  ["Qual é o continente mais pequeno?","Oceânia","Europa","Antárctida","América do Sul"],
+  ["Em que continente fica Portugal?","Europa","África","Ásia","América"],
+  ["Qual é o maior oceano do mundo?","Pacífico","Atlântico","Índico","Árctico"],
+  ["Qual é o maior deserto quente do mundo?","Sara","Gobi","Atacama","Kalahari"],
+  ["Qual é o maior país do mundo?","Rússia","China","Canadá","Estados Unidos da América"],
+  ["Em que país se fala alemão?","Alemanha","França","Itália","Espanha"],
+  ["Qual é a língua falada em Espanha?","Espanhol","Português","Italiano","Francês"],
+  ["Qual é a língua falada em França?","Francês","Espanhol","Alemão","Inglês"],
+  ["Qual é a língua falada em Itália?","Italiano","Grego","Francês","Latim"],
+  ["Se olhares para o Norte, que ponto cardeal fica à tua direita?","Este","Oeste","Sul","Nordeste"],
+  ["Qual é o ponto cardeal oposto ao Norte?","Sul","Este","Oeste","Nascente"],
+  ["O que é uma bússola?","Um instrumento que indica o Norte","Um tipo de mapa","Um relógio de sol","Uma régua"],
+  // Histórias e personagens
+  ["Qual é o boneco de madeira cujo nariz cresce quando mente?","Pinóquio","Peter Pan","Aladino","Pequeno Polegar"],
+  ["Como se chama o menino que não queria crescer e vivia na Terra do Nunca?","Peter Pan","Pinóquio","Tarzan","Mogli"],
+  ["Quantos anões acompanham a Branca de Neve?","7","3","5","12"],
+  ["Quantos porquinhos há na história dos três porquinhos?","3","2","4","5"],
+  ["Qual é a princesa que perdeu o sapato à meia-noite?","Cinderela","Rapunzel","Bela Adormecida","Branca de Neve"],
+  ["Quem criou o Rato Mickey?","Walt Disney","Hergé","Charles Schulz","Walt Whitman"],
+  ["Quem escreveu «Alice no País das Maravilhas»?","Lewis Carroll","Roald Dahl","J. K. Rowling","Mark Twain"],
+  ["Quem escreveu os livros de «Harry Potter»?","J. K. Rowling","Roald Dahl","Enid Blyton","C. S. Lewis"],
+  ["Quem escreveu «O Principezinho»?","Antoine de Saint-Exupéry","Jules Verne","Hans Christian Andersen","Carlo Collodi"],
+  ["Quem escreveu «A Fada Oriana»?","Sophia de Mello Breyner Andresen","Alice Vieira","Luísa Ducla Soares","Ana Maria Magalhães"],
+  // Música e desporto
+  ["Qual destes é um instrumento de sopro?","Flauta","Violino","Tambor","Harpa"],
+  ["Qual destes é um instrumento de cordas?","Violino","Flauta","Trompete","Bateria"],
+  ["Qual destes é um instrumento de percussão?","Bateria","Violoncelo","Clarinete","Guitarra"],
+  ["Quantos jogadores tem uma equipa de futebol em campo?","11","9","10","12"],
+  ["Em que desporto se usa uma bola oval?","Râguebi","Futebol","Ténis","Voleibol"],
+  ["Em que desporto se encesta a bola num cesto bem alto?","Basquetebol","Andebol","Râguebi","Hóquei"],
+  ["Que desporto pratica o tenista Rafael Nadal?","Ténis","Golfe","Futebol","Natação"],
+  // Profissões e vida quotidiana
+  ["Quais são as cores de um semáforo?","Vermelho, amarelo e verde","Azul, amarelo e verde","Branco, preto e vermelho","Roxo, laranja e azul"],
+  ["O que devem fazer os peões quando o semáforo está vermelho?","Esperar","Atravessar a correr","Atravessar devagar","Tocar à campainha"],
+  ["Que veículo consegue andar debaixo de água?","Submarino","Helicóptero","Eléctrico","Jangada"],
+  ["Quem conduz um avião?","O piloto","O maquinista","O capitão do navio","O motorista"],
+  ["Quem trata dos animais doentes?","O veterinário","O dentista","O enfermeiro","O cozinheiro"],
+  ["Quem desenha casas e edifícios?","O arquitecto","O padeiro","O electricista","O pintor de telas"],
+  ["Quem apaga os incêndios?","O bombeiro","O polícia","O guarda-florestal","O carteiro"],
+  ["Quem faz o pão?","O padeiro","O carpinteiro","O barbeiro","O sapateiro"]
+);
+Q78.push(
+  // Medidas, tempo e dinheiro
+  ["Quantos segundos tem um minuto?","60","100","30","24"],
+  ["Quantos dias tem um ano bissexto?","366","365","364","360"],
+  ["Quantos meses tem um trimestre?","3","4","6","2"],
+  ["Quantos anos tem uma década?","10","100","20","12"],
+  ["Quantos anos tem um século?","100","10","1000","50"],
+  ["Quantos anos tem um milénio?","1000","100","500","10 000"],
+  ["Quantos cêntimos tem um euro?","100","10","50","1000"],
+  ["Quantas moedas de 50 cêntimos são precisas para fazer 2 euros?","4","2","3","5"],
+  ["Se tens 10 euros e gastas 3,50 €, quanto te sobra?","6,50 €","7,50 €","6 €","7 €"],
+  ["Quantos minutos tem meia hora?","30","15","20","45"],
+  ["Em que mês começa a Primavera, no hemisfério norte?","Março","Janeiro","Junho","Setembro"],
+  ["Em que mês começa o Verão, no hemisfério norte?","Junho","Maio","Julho","Agosto"],
+  ["Quantas estações do ano há?","4","3","5","2"],
+  ["Qual é o mês mais curto do ano?","Fevereiro","Abril","Junho","Setembro"],
+  ["Que data se celebra a 31 de Dezembro?","Passagem de ano","Natal","Páscoa","Dia dos Reis"],
+  ["Em que data se celebra o Dia dos Namorados?","14 de Fevereiro","1 de Maio","25 de Dezembro","8 de Março"],
+  ["Que festa se celebra com máscaras e fatos coloridos, em Fevereiro ou Março?","Carnaval","Páscoa","Natal","Dia de Reis"],
+  // Números e formas
+  ["Qual destes números é ímpar?","37","24","58","100"],
+  ["Qual destes números é múltiplo de 5?","35","32","41","28"],
+  ["Quantos zeros tem o número cem?","2","1","3","4"],
+  ["Qual é o triplo de 12?","36","24","15","48"],
+  ["Que número romano representa o 10?","X","V","L","I"],
+  ["Que número é XV, em numeração romana?","15","16","14","25"],
+  ["Que número é IX, em numeração romana?","9","11","4","6"],
+  ["Que figura geométrica tem 6 lados?","Hexágono","Pentágono","Octógono","Triângulo"],
+  ["Quantas faces tem um cubo?","6","4","8","12"],
+  ["Que sólido geométrico se parece com uma bola?","Esfera","Cubo","Cone","Cilindro"],
+  ["Que sólido geométrico se parece com uma lata de conservas?","Cilindro","Esfera","Cubo","Pirâmide"],
+  ["Que sólido geométrico se parece com um chapéu de festa de anos?","Cone","Cilindro","Cubo","Esfera"],
+  ["Quantas rodas tem um triciclo?","3","2","4","6"],
+  // Língua portuguesa
+  ["Qual é o contrário de «claro»?","Escuro","Grande","Largo","Alto"],
+  ["Qual é o contrário de «entrar»?","Sair","Subir","Ficar","Voltar"],
+  ["Qual é o contrário de «cheio»?","Vazio","Pesado","Largo","Alto"],
+  ["Qual é um sinónimo de «bonito»?","Belo","Feio","Pequeno","Largo"],
+  ["Quantas sílabas tem a palavra «sapato»?","3","2","4","5"],
+  ["Quantas sílabas tem a palavra «casa»?","2","1","3","4"],
+  ["Que palavra rima com «pato»?","Gato","Pé","Sol","Lobo"],
+  ["Que palavra rima com «pão»?","Mão","Pé","Gato","Sol"],
+  ["Qual é o plural de «lápis»?","Lápis","Lápises","Lápiz","Lápeis"],
+  ["Qual é o feminino de «leão»?","Leoa","Leã","Leonesa","Leão"],
+  ["O que é um verbo?","Uma palavra que indica uma acção","Uma palavra que dá nome a um lugar","Uma palavra que descreve cores","Uma palavra que junta frases"],
+  ["Qual destas palavras é um nome?","Mesa","Correr","Alto","Depressa"],
+  ["Qual destas palavras é um adjectivo?","Alto","Mesa","Correr","Ontem"],
+  ["Que sinal de pontuação se usa no fim de uma pergunta?","Ponto de interrogação","Ponto final","Vírgula","Dois pontos"],
+  ["Que sinal de pontuação usamos para mostrar espanto?","Ponto de exclamação","Ponto final","Vírgula","Aspas"],
+  ["Em «Ontem fui à praia», em que tempo está o verbo?","Passado","Presente","Futuro","Condicional"],
+  // Objectos do dia-a-dia
+  ["Que aparelho usamos para medir o peso?","Balança","Régua","Termómetro","Relógio"],
+  ["Que objecto usamos para medir o comprimento?","Régua","Balança","Termómetro","Funil"],
+  ["Para que serve uma lupa?","Para ver as coisas maiores","Para ouvir melhor","Para medir o peso","Para cortar papel"],
+  ["Que electrodoméstico mantém os alimentos frios?","Frigorífico","Forno","Micro-ondas","Torradeira"],
+  ["Que aparelho usamos para lavar a roupa?","Máquina de lavar","Aspirador","Batedeira","Ferro de engomar"],
+  ["Que aparelho aquece a comida em poucos minutos, sem precisar de lume?","Micro-ondas","Frigorífico","Batedeira","Liquidificadora"],
+  ["Que invento nos permite falar com alguém que está longe?","Telefone","Régua","Lanterna","Bússola"],
+  ["O que se usa para ver as horas num pulso?","Relógio de pulso","Bússola","Termómetro","Lupa"]
+);
+Q910.push(
+  // Portugal: história e lugares
+  ["Que rei mandou construir o Mosteiro da Batalha, depois da vitória em Aljubarrota?","D. João I","D. Dinis","D. Manuel I","D. Afonso V"],
+  ["Que rei fundou a primeira universidade portuguesa, em 1290?","D. Dinis","D. Afonso Henriques","D. João II","D. Pedro II"],
+  ["Que monumento, na margem do Tejo, em Lisboa, homenageia os Descobrimentos?","Padrão dos Descobrimentos","Torre de Belém","Castelo de São Jorge","Arco da Rua Augusta"],
+  ["Como se chamava o navio leve e rápido, muito usado nos Descobrimentos portugueses?","Caravela","Galera","Jangada","Caíque"],
+  ["Que instrumento usavam os navegadores para medir a altura do Sol e das estrelas?","Astrolábio","Microscópio","Barómetro","Termómetro"],
+  ["Que navegador chegou à ilha da Madeira em 1419?","João Gonçalves Zarco","Vasco da Gama","Gil Eanes","Diogo Gomes"],
+  ["Em que cidade fica o Santuário do Bom Jesus do Monte?","Braga","Viseu","Faro","Leiria"],
+  ["Em que cidade fica o Castelo de São Jorge?","Lisboa","Porto","Coimbra","Guimarães"],
+  ["Em que cidade fica o Convento de Cristo, antiga sede dos Templários?","Tomar","Abrantes","Santarém","Sintra"],
+  ["Que cidade alentejana tem um famoso templo romano e é Património da Humanidade?","Évora","Beja","Portalegre","Elvas"],
+  ["Em que cidade se celebram as Festas de São João, com martelinhos e alho-porro?","Porto","Faro","Setúbal","Aveiro"],
+  ["Que rio nasce na Serra da Estrela e passa em Coimbra?","Mondego","Vouga","Sado","Lis"],
+  ["Qual é a ilha mais pequena do arquipélago dos Açores?","Corvo","Flores","Graciosa","Santa Maria"],
+  ["Em que ano o fado foi declarado Património Cultural Imaterial da Humanidade?","2011","1974","1999","2020"],
+  // Capitais e países
+  ["Qual é a capital de Espanha?","Madrid","Barcelona","Sevilha","Lisboa"],
+  ["Qual é a capital do Reino Unido?","Londres","Dublin","Edimburgo","Manchester"],
+  ["Qual é a capital da China?","Pequim","Xangai","Hong Kong","Tóquio"],
+  ["Qual é a capital do México?","Cidade do México","Guadalajara","Cancún","Monterrey"],
+  ["Qual é a capital da Escócia?","Edimburgo","Glasgow","Cardiff","Belfast"],
+  ["Qual é a capital do País de Gales?","Cardiff","Edimburgo","Londres","Liverpool"],
+  ["Qual é a capital do Uruguai?","Montevideu","Assunção","Lima","Quito"],
+  ["Qual é a capital da Venezuela?","Caracas","Bogotá","La Paz","Panamá"],
+  ["Qual é a capital do Equador?","Quito","Lima","Bogotá","Guayaquil"],
+  ["Qual é o maior país da América do Norte em área?","Canadá","Estados Unidos","México","Cuba"],
+  ["Que país é conhecido como «País do Sol Nascente»?","Japão","China","Índia","Coreia do Sul"],
+  ["Que país é famoso pelos seus moinhos de vento e campos de tulipas?","Países Baixos","Suécia","Suíça","Áustria"],
+  ["Em que cidade italiana fica uma torre famosa por estar inclinada?","Pisa","Roma","Milão","Florença"],
+  ["Em que país fica o deserto do Atacama, um dos mais secos do mundo?","Chile","Egipto","Austrália","Mongólia"],
+  ["Qual é a maior floresta tropical do mundo?","Amazónia","Floresta Negra","Taiga","Congo"],
+  ["Qual é a maior ilha do mundo, sem contar com os continentes?","Gronelândia","Madagáscar","Islândia","Bornéu"],
+  ["Qual é o mar que tem a água mais salgada do mundo?","Mar Morto","Mar Negro","Mar Mediterrâneo","Mar Báltico"],
+  ["Qual é a montanha mais alta do mundo?","Evereste","Monte Branco","Kilimanjaro","Aconcágua"],
+  ["Em que continente fica a Austrália?","Oceânia","Ásia","África","Antárctida"],
+  ["Em que continente vivem os pinguins-imperador?","Antárctida","Europa","América do Sul","Ásia"],
+  // Bandeiras e símbolos
+  ["Quantas estrelas tem a bandeira da União Europeia?","12","15","27","10"],
+  ["Quantas riscas tem a bandeira dos Estados Unidos da América?","13","50","10","7"],
+  ["Como é a bandeira do Japão?","Branca com um círculo vermelho","Vermelha com um círculo branco","Azul com uma estrela","Branca com uma cruz"],
+  ["Quais são as cores da bandeira de Itália?","Verde, branco e vermelho","Azul, branco e vermelho","Verde, amarelo e vermelho","Preto, vermelho e amarelo"],
+  ["Qual é o símbolo que aparece no centro da bandeira de Portugal?","A esfera armilar e o escudo","Uma cruz de Cristo","Uma águia","Um leão"],
+  // Culinária e tradições
+  ["Qual é o prato alentejano feito com pão, alho, coentros e ovos escalfados?","Açorda","Cozido","Feijoada","Arroz de tomate"],
+  ["Que doce é típico de Belém, em Lisboa?","Pastel de nata","Pão de Deus","Bolo-rei","Arroz-doce"],
+  ["De que é feito o vinho do Porto?","De uvas","De cevada","De maçãs","De cana-de-açúcar"],
+  ["Que bolo se come em Portugal na época de Natal, com frutas cristalizadas?","Bolo-rei","Pão de ló","Bola de Berlim","Queijada"],
+  ["Em que festa portuguesa se comem castanhas e se faz o «magusto»?","Dia de São Martinho","Dia de Reis","Páscoa","Dia dos Namorados"],
+  ["Em que festa se oferecem ovos e amêndoas?","Páscoa","Carnaval","Dia da Mãe","Dia de São João"],
+  // Desporto
+  ["Que atleta portuguesa ganhou a maratona olímpica em 1988?","Rosa Mota","Fernanda Ribeiro","Naide Gomes","Carla Sacramento"],
+  ["Que atleta português ganhou o ouro olímpico no triplo salto, em Pequim 2008?","Nelson Évora","Carlos Lopes","Francis Obikwelu","Rui Silva"],
+  ["Em que desporto se disputa a Volta a Portugal?","Ciclismo","Atletismo","Automobilismo","Natação"],
+  ["Em que desporto se usa um tatami?","Judo","Ténis","Ginástica rítmica","Voleibol"],
+  ["Quantos jogadores de cada equipa estão em campo num jogo de andebol?","7","5","11","9"],
+  ["Quantos minutos tem cada parte de um jogo de futebol?","45","30","60","40"],
+  ["Em que desporto se salta com uma vara?","Atletismo","Natação","Esgrima","Ténis"]
+);
+Q910.push(
+  // Corpo humano
+  ["Quantos dentes de leite tem uma criança?","20","32","28","24"],
+  ["Qual é o sentido que usamos para distinguir o doce do salgado?","Paladar","Olfacto","Audição","Tacto"],
+  ["Qual é o osso mais pequeno do corpo humano, situado no ouvido?","Estribo","Fémur","Rótula","Rádio"],
+  ["Quantos pares de costelas tem, normalmente, o ser humano?","12","10","14","8"],
+  ["Como se chamam os vasos que levam o sangue do coração para o resto do corpo?","Artérias","Veias","Capilares","Brônquios"],
+  ["Como se chama o tubo por onde passa o ar até aos pulmões?","Traqueia","Esófago","Faringe","Uretra"],
+  ["Onde começa a digestão dos alimentos?","Na boca","No estômago","No intestino","No fígado"],
+  ["Que gás produz o nosso corpo na respiração e liberta para o ar?","Dióxido de carbono","Hélio","Hidrogénio","Néon"],
+  ["Que órgão do corpo controla o pensamento e os movimentos?","Cérebro","Coração","Estômago","Pulmão"],
+  ["Qual é o músculo que está sempre a bater, sem parar, durante a vida?","Coração","Bíceps","Língua","Gémeo"],
+  // Animais
+  ["Qual é o animal terrestre mais alto?","Girafa","Elefante","Urso-pardo","Camelo"],
+  ["Qual é o maior felino do mundo?","Tigre","Leão","Leopardo","Chita"],
+  ["A que grupo de animais pertence o golfinho?","Mamíferos","Peixes","Répteis","Moluscos"],
+  ["A que grupo de animais pertence o crocodilo?","Répteis","Anfíbios","Peixes","Mamíferos"],
+  ["Que ave é conhecida por ser nocturna e ter olhos grandes?","Coruja","Pardal","Gaivota","Andorinha"],
+  ["Que animal produz a seda?","Bicho-da-seda","Aranha-de-jardim","Abelha","Formiga"],
+  ["Qual é o mamífero que põe ovos?","Ornitorrinco","Morcego","Golfinho","Tamanduá"],
+  ["Como se chama a casa das abelhas?","Colmeia","Formigueiro","Vespeiro","Toca"],
+  ["Como se chama a cria do cavalo?","Potro","Vitelo","Cabrito","Leitão"],
+  ["De que se alimenta, principalmente, o panda-gigante?","Bambu","Peixe","Mel","Frutos secos"],
+  ["Como se chama o sono profundo de alguns animais durante o Inverno?","Hibernação","Migração","Metamorfose","Camuflagem"],
+  ["Que ave australiana não voa e é parecida com o avestruz?","Emu","Kiwi","Pelicano","Papagaio"],
+  ["Que animal aparece no símbolo da organização de defesa da natureza WWF?","Panda","Tigre","Baleia","Urso-polar"],
+  // Natureza e Terra
+  ["Como se chama o conjunto formado pelos seres vivos e pelo meio onde vivem?","Ecossistema","Atmosfera","Habitat","Clima"],
+  ["Em que parte da flor se produz o pólen?","No estame","No caule","Na raiz","No fruto"],
+  ["Que parte da planta transporta a água e os sais minerais das raízes para as folhas?","Caule","Pétala","Semente","Fruto"],
+  ["Como se chama o material derretido que sai de um vulcão em erupção?","Lava","Areia","Cinza fria","Argila"],
+  ["Que astro é o principal responsável pelas marés?","Lua","Sol","Marte","Júpiter"],
+  ["Como se chama a ciência que estuda o tempo atmosférico?","Meteorologia","Geologia","Astronomia","Zoologia"],
+  ["Que instrumento mede a quantidade de chuva?","Pluviómetro","Anemómetro","Barómetro","Termómetro"],
+  ["Que instrumento mede a velocidade do vento?","Anemómetro","Pluviómetro","Higrómetro","Bússola"],
+  ["De que árvore se extrai a cortiça, tão importante em Portugal?","Sobreiro","Pinheiro","Eucalipto","Oliveira"],
+  ["Que árvore dá bolotas?","Carvalho","Laranjeira","Choupo","Cedro"],
+  ["De que material é feito o vidro, essencialmente?","De areia","De argila","De madeira","De petróleo"],
+  ["Que metal se obtém misturando cobre e estanho?","Bronze","Aço","Latão","Ouro branco"],
+  ["Como se chama a passagem do estado líquido ao estado sólido?","Solidificação","Fusão","Evaporação","Sublimação"],
+  ["Que planeta é conhecido como «estrela da manhã», por brilhar tanto ao amanhecer?","Vénus","Marte","Mercúrio","Neptuno"],
+  ["Quanto tempo, aproximadamente, demora a Lua a dar uma volta à Terra?","28 dias","7 dias","1 ano","24 horas"],
+  ["Em que estação do ano os dias são mais curtos, no hemisfério norte?","Inverno","Verão","Primavera","Outono"],
+  ["Que cor se obtém misturando azul e amarelo?","Verde","Laranja","Roxo","Castanho"],
+  ["Qual destes materiais é um bom isolante térmico?","Lã","Cobre","Alumínio","Ferro"],
+  ["Qual destes seres vivos é um fungo?","Cogumelo","Musgo","Feto","Alga"],
+  ["O que é um fóssil?","Um resto ou marca de um ser vivo muito antigo","Uma rocha vulcânica","Um tipo de planta","Um mineral precioso"],
+  ["De que é feito o papel, principalmente?","De fibras de árvores","De areia","De plástico","De metal"],
+  ["Qual é o gás que usamos para respirar e que está no ar?","Oxigénio","Hélio","Metano","Néon"],
+);
+Q910.push(
+  // Matemática
+  ["Quantos milímetros tem um centímetro?","10","100","1000","12"],
+  ["Quantos gramas tem um quilograma?","1000","100","10","500"],
+  ["Quantos minutos tem um dia inteiro?","1440","1000","1240","2400"],
+  ["Quantos meses do ano têm 31 dias?","7","6","8","5"],
+  ["Quantos lados tem um decágono?","10","8","9","12"],
+  ["Qual é o triplo de 40?","120","80","100","160"],
+  ["Quantas semanas tem, aproximadamente, um ano?","52","48","60","30"],
+  ["Como se chama o segmento que passa pelo centro de um círculo e une dois pontos da circunferência?","Diâmetro","Raio","Corda","Arco"],
+  ["O que é o raio de um círculo, em relação ao diâmetro?","A metade do diâmetro","O dobro do diâmetro","Igual ao diâmetro","A quarta parte do diâmetro"],
+  ["Como se chama o resultado de uma multiplicação?","Produto","Soma","Quociente","Diferença"],
+  ["Como se chama o resultado de uma divisão?","Quociente","Produto","Diferença","Parcela"],
+  ["Quanto é metade de um quarto?","Um oitavo","Um sexto","Um terço","Um meio"],
+  ["Qual é o maior número com três algarismos?","999","990","100","1000"],
+  ["Qual é o menor número com três algarismos?","100","101","10","111"],
+  ["Qual é o número que não é positivo nem negativo?","Zero","Um","Dez","Meio"],
+  ["Como se chama a figura com todos os pontos à mesma distância do centro?","Circunferência","Elipse","Losango","Trapézio"],
+  // Língua portuguesa
+  ["Qual é o plural de «animal»?","Animais","Animals","Animales","Animaes"],
+  ["Qual é o plural de «papel»?","Papéis","Papeis","Papels","Papéles"],
+  ["Qual é o plural de «pastel»?","Pastéis","Pasteis","Pastels","Pastéles"],
+  ["Qual é o feminino de «cavalo»?","Égua","Cavala","Poldra","Ovelha"],
+  ["Qual é o aumentativo de «casa»?","Casarão","Casinha","Casita","Casal"],
+  ["Qual é o diminutivo de «livro»?","Livrinho","Livrão","Livraria","Livreiro"],
+  ["Qual é o antónimo de «verdade»?","Mentira","Certeza","Razão","Facto"],
+  ["Qual é o sinónimo de «começar»?","Iniciar","Terminar","Adiar","Parar"],
+  ["Qual destas palavras é um nome próprio?","Lisboa","Cidade","Rio","Montanha"],
+  ["Em «O gato dorme no sofá», qual é o verbo?","Dorme","Gato","Sofá","No"],
+  ["Qual é a classe de palavras de «e», «mas» e «ou»?","Conjunção","Preposição","Artigo","Pronome"],
+  ["Em que conjugação está o verbo «comer»?","2.ª conjugação","1.ª conjugação","3.ª conjugação","Não tem conjugação"],
+  ["Em que conjugação está o verbo «cantar»?","1.ª conjugação","2.ª conjugação","3.ª conjugação","4.ª conjugação"],
+  ["Qual é o género da palavra «mapa»?","Masculino","Feminino","Neutro","Não tem género"],
+  ["O que faz um adjectivo numa frase?","Diz como é um nome","Indica uma acção","Substitui um verbo","Liga duas frases"],
+  ["Quantas vogais tem a palavra «aeroporto»?","5","4","6","3"],
+  // Arte e música
+  ["Quantas cordas tem uma guitarra clássica?","6","4","8","12"],
+  ["Quantas teclas tem um piano?","88","66","100","52"],
+  ["Quem compôs «A Flauta Mágica»?","Wolfgang Amadeus Mozart","Ludwig van Beethoven","Johann Sebastian Bach","Giuseppe Verdi"],
+  ["A que família de instrumentos pertence o violino?","Cordas","Sopro","Percussão","Teclas"],
+  ["Qual destes é um instrumento de percussão?","Tambor","Flauta","Violino","Trompete"],
+  ["Quem pintou «A Última Ceia»?","Leonardo da Vinci","Miguel Ângelo","Rafael","Botticelli"],
+  ["Quem esculpiu a estátua do «David», em Florença?","Miguel Ângelo","Leonardo da Vinci","Donatello","Bernini"],
+  ["Em que país nasceu a dança chamada flamenco?","Espanha","Portugal","Itália","Cuba"],
+  ["Que bebida é típica do Porto e envelhece em caves, em Vila Nova de Gaia?","Vinho do Porto","Ginjinha","Vinho verde","Aguardente"],
+  ["Que prato português leva couve, batata e chouriço?","Caldo verde","Gaspacho","Sopa de pedra","Canja"],
+  // Ciência e invenções
+  ["Quem inventou o telefone?","Alexander Graham Bell","Thomas Edison","Albert Einstein","Isaac Newton"],
+  ["Que instrumento usamos para ver objectos muito pequenos?","Microscópio","Telescópio","Periscópio","Binóculos"],
+  ["Que instrumento permite ver astros muito distantes?","Telescópio","Microscópio","Estetoscópio","Lupa"],
+  ["Que invento dos irmãos Wright voou pela primeira vez em 1903?","O avião","O helicóptero","O balão","O comboio"],
+  ["Que irmãos criaram o cinema, em 1895, em França?","Irmãos Lumière","Irmãos Wright","Irmãos Marx","Irmãos Grimm"],
+  ["Que cientista propôs que a Terra gira à volta do Sol?","Nicolau Copérnico","Ptolomeu","Aristóteles","Platão"],
+  ["Quem formulou a teoria da evolução por selecção natural?","Charles Darwin","Isaac Newton","Louis Pasteur","Gregor Mendel"]
+);
+
+/* ---------- Geradores: perguntas que nunca são iguais ---------- */
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const mix = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+// três respostas erradas, inteiras, positivas e diferentes da certa, perto do valor certo
+function numOpts(c, cands) {
+  const bad = [];
+  for (const x of mix(cands)) { if (Number.isInteger(x) && x !== c && x > 0 && !bad.includes(x)) bad.push(x); if (bad.length === 3) break; }
+  let k = 1; while (bad.length < 3) { const x = c + k * (k % 2 ? 1 : -1) * 3; if (x > 0 && x !== c && !bad.includes(x)) bad.push(x); k++; }
+  return [String(c), ...bad.map(String)];
+}
+const ROMAN = n => { const m = [[100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]]; let r = ""; for (const [v, s] of m) while (n >= v) { r += s; n -= v; } return r; };
+
+// 5–6 anos: contar, números, cores, contas até 10
+function gen56() {
+  const t = rnd(0, 5);
+  if (t === 0) {
+    const fr = pick(["🍎", "🍓", "🍌", "🍊", "🐟", "⭐", "🎈", "🚗", "🐶", "🌸"]);
+    const NOM = { "🍎": ["maçãs", "f"], "🍓": ["morangos", "m"], "🍌": ["bananas", "f"], "🍊": ["laranjas", "f"], "🐟": ["peixes", "m"], "⭐": ["estrelas", "f"], "🎈": ["balões", "m"], "🚗": ["carros", "m"], "🐶": ["cães", "m"], "🌸": ["flores", "f"] }[fr];
+    const n = rnd(2, 6);
+    const bad = mix([1, 2, 3, 4, 5, 6, 7].filter(x => x !== n)).slice(0, 3);
+    const w = NOM[1] === "f" ? ["", "uma", "duas", "três", "quatro", "cinco", "seis"] : ["", "um", "dois", "três", "quatro", "cinco", "seis"];
+    return ["Onde estão " + w[n] + " " + NOM[0] + "?", fr.repeat(n), ...bad.map(b => fr.repeat(b))];
+  }
+  if (t === 1) {
+    const k = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
+    const n = rnd(1, 9);
+    const bad = mix(k.map((_, i) => i).filter(i => i !== n)).slice(0, 3);
+    return ["Qual é o número " + n + "?", k[n], ...bad.map(i => k[i])];
+  }
+  if (t === 2) {
+    const cores = [["🔴", "vermelho"], ["🟡", "amarelo"], ["🟢", "verde"], ["🔵", "azul"], ["🟠", "laranja"], ["🟣", "roxo"], ["🟤", "castanho"], ["⚫", "preto"], ["⚪", "branco"]];
+    const c = pick(cores), outros = mix(cores.filter(x => x !== c)).slice(0, 3);
+    return ["Qual é o círculo " + c[1] + "?", c[0], ...outros.map(x => x[0])];
+  }
+  if (t === 3) {
+    if (rnd(0, 1)) { const a = rnd(1, 8), b = rnd(1, 10 - a), c = a + b; return ["Quanto é " + a + " + " + b + "?", ...numOpts(c, [c + 1, c - 1, c + 2, c - 2, c + 3])]; }
+    const a = rnd(4, 10), b = rnd(1, a - 1), c = a - b; return ["Quanto é " + a + " − " + b + "?", ...numOpts(c, [c + 1, c - 1, c + 2, c - 2, c + 3])];
+  }
+  if (t === 4) { const n = rnd(1, 19); return ["Que número vem logo a seguir ao " + n + "?", ...numOpts(n + 1, [n + 2, n - 1, n, n + 3, n + 10])]; }
+  const nums = mix(Array.from({ length: 30 }, (_, i) => i + 1)).slice(0, 4);
+  return ["Qual é o número maior?", String(Math.max(...nums)), ...nums.filter(x => x !== Math.max(...nums)).map(String)];
+}
+
+// 7–8 anos: contas com dois algarismos, tabuadas, dobros e metades, sequências
+function gen78() {
+  const t = rnd(0, 7);
+  if (t === 0) { const a = rnd(14, 68), b = rnd(13, 99 - a), c = a + b; return ["Quanto é " + a + " + " + b + "?", ...numOpts(c, [c + 1, c - 1, c + 10, c - 10, c + 2, c - 2])]; }
+  if (t === 1) { const a = rnd(45, 99), b = rnd(12, a - 10), c = a - b; return ["Quanto é " + a + " − " + b + "?", ...numOpts(c, [c + 1, c - 1, c + 10, c - 10, c + 2, c - 2])]; }
+  if (t === 2) { const a = rnd(3, 10), b = rnd(3, 10), c = a * b; return ["Quanto é " + a + " × " + b + "?", ...numOpts(c, [c + a, c - a, c + b, c - b, c + 1, c - 1])]; }
+  if (t === 3) { const b = rnd(3, 9), q = rnd(3, 10), a = b * q; return ["Quanto é " + a + " ÷ " + b + "?", ...numOpts(q, [q + 1, q - 1, q + 2, q - 2, q + 3])]; }
+  if (t === 4) { const n = rnd(13, 49); return rnd(0, 1) ? ["Qual é o dobro de " + n + "?", ...numOpts(n * 2, [n * 2 + 2, n * 2 - 2, n * 2 + 10, n * 2 - 10, n * 2 + 1])] : ["Qual é a metade de " + (n * 2) + "?", ...numOpts(n, [n + 1, n - 1, n + 10, n - 10, n + 2])]; }
+  if (t === 5) { const s = rnd(2, 9), a = rnd(1, 9) * s, seq = [a, a + s, a + 2 * s, a + 3 * s], c = a + 4 * s; return ["Que número vem a seguir: " + seq.join(", ") + ", …?", ...numOpts(c, [c + 1, c - 1, c + s, c - s, c + 2])]; }
+  if (t === 6) { const m = rnd(2, 9); return ["Quantos centímetros há em " + m + " metros?", ...numOpts(m * 100, [m * 10, m * 1000, m * 100 + 10, m * 100 - 10, m * 100 + 100])]; }
+  const h = rnd(2, 6); return ["Quantos minutos há em " + h + " horas?", ...numOpts(h * 60, [h * 100, h * 30, h * 60 + 10, h * 60 - 10, h * 60 + 60])];
+}
+
+// 9–10 anos: contas maiores, áreas e perímetros, fracções, percentagens, numeração romana
+function gen910() {
+  const t = rnd(0, 6);
+  if (t === 0) { const a = rnd(12, 49), b = rnd(3, 9), c = a * b; return ["Quanto é " + a + " × " + b + "?", ...numOpts(c, [c + b, c - b, c + 10, c - 10, c + a, c - a])]; }
+  if (t === 1) { const b = rnd(6, 12), q = rnd(12, 30), a = b * q; return ["Quanto é " + a + " ÷ " + b + "?", ...numOpts(q, [q + 1, q - 1, q + 2, q - 2, q + 10])]; }
+  if (t === 2) {
+    const l = rnd(4, 15), w = rnd(3, l - 1);
+    return rnd(0, 1) ? ["Um rectângulo tem " + l + " cm de comprimento e " + w + " cm de largura. Qual é a sua área?", ...numOpts(l * w, [l + w, 2 * (l + w), l * w + l, l * w - w, l * w + 10]).map(x => x + " cm²")]
+                     : ["Um rectângulo tem " + l + " cm de comprimento e " + w + " cm de largura. Qual é o seu perímetro?", ...numOpts(2 * (l + w), [l + w, l * w, 2 * (l + w) + 2, 2 * (l + w) - 2, 2 * l + w]).map(x => x + " cm")];
+  }
+  if (t === 3) { const d = pick([2, 3, 4, 5, 10]), n = rnd(1, d - 1), base = d * rnd(3, 12), c = base / d * n; return ["Quanto é " + n + "/" + d + " de " + base + "?", ...numOpts(c, [c + base / d, c - base / d, c + 1, c - 1, base / d])]; }
+  if (t === 4) { const p = pick([10, 20, 25, 50]), base = (100 / p) * rnd(2, 12), c = base * p / 100; return ["Quanto é " + p + "% de " + base + "?", ...numOpts(c, [c * 2, c + 1, c - 1, base / 10, c + 5, c + 10])]; }
+  if (t === 5) { const n = rnd(14, 99), bad = mix([n + 1, n - 1, n + 10, n - 10, n + 5, n - 5].filter(x => x > 0 && x !== n)).slice(0, 3); return ["Como se escreve " + n + " em numeração romana?", ROMAN(n), ...bad.map(ROMAN)]; }
+  const a = rnd(2, 9), seq = [a, a * 2, a * 4, a * 8], c = a * 16;
+  return ["Que número vem a seguir: " + seq.join(", ") + ", …?", ...numOpts(c, [c + a, c - a, c / 2 + a, c + 2, c - 2, c * 2])];
+}
+
+// 11–12 anos: potências, raízes, equações, médias, áreas de triângulos, percentagens
+function gen1112() {
+  const t = rnd(0, 8);
+  if (t === 0) { const a = rnd(12, 25), b = rnd(11, 19), c = a * b; return ["Quanto é " + a + " × " + b + "?", ...numOpts(c, [c + a, c - a, c + b, c - b, c + 10, c - 10])]; }
+  if (t === 1) { const n = rnd(3, 15), c = n * n; return ["Quanto é " + n + "²?", ...numOpts(c, [c + n, c - n, n * 2, c + 2 * n, c - 2 * n + 1])]; }
+  if (t === 2) { const n = rnd(4, 15), c = n * n; return ["Qual é a raiz quadrada de " + c + "?", ...numOpts(n, [n + 1, n - 1, n + 2, n - 2, n * 2])]; }
+  if (t === 3) { const n = rnd(4, 10), c = Math.pow(2, n); return ["Quanto é 2 elevado a " + n + "?", ...numOpts(c, [c / 2, c * 2, c + 2, c - 2, n * n * 2, c + 8])]; }
+  if (t === 4) { const x = rnd(8, 60), a = rnd(11, 45), s = x + a; return ["Se x + " + a + " = " + s + ", quanto vale x?", ...numOpts(x, [x + 1, x - 1, x + 10, x - 10, s + a, a])]; }
+  if (t === 5) { const k = rnd(3, 9), x = rnd(6, 20), p = k * x; return ["Se " + k + " × x = " + p + ", quanto vale x?", ...numOpts(x, [x + 1, x - 1, x + k, x - 2, p - k, k + 2])]; }
+  if (t === 6) { const b = rnd(4, 20), h = rnd(3, 16) * 2, c = b * h / 2; return ["Um triângulo tem " + b + " cm de base e " + h + " cm de altura. Qual é a sua área?", ...numOpts(c, [b * h, b + h, c + b, c - h, c + 10]).map(x => x + " cm²")]; }
+  if (t === 7) {
+    const m = rnd(8, 30), u = rnd(1, 6), w = rnd(1, 6), x = m - u, y = m + w, z = m + u - w;
+    return ["Qual é a média de " + x + ", " + y + " e " + z + "?", ...numOpts(m, [m + 1, m - 1, m + 2, m - 2, x + y, z + 3])];
+  }
+  const p = pick([15, 30, 40, 60, 75]), base = pick([40, 60, 80, 120, 160, 200, 240]), c = base * p / 100;
+  return ["Quanto é " + p + "% de " + base + "?", ...numOpts(c, [c + 10, c - 10, c * 2, base - c, c + 5, c - 5])];
+}
+
+/* ===================== grupos de idade ===================== */
+const G = [
+  { key: "5", label: "5–6 anos", bank: Q56, gen: gen56, pg: 0.3,
+    desc: "crianças de 5–6 anos (pré-escolar e 1.º ano): perguntas muito curtas e concretas sobre animais, cores, formas, corpo, alimentos, dias da semana, estações do ano, sons e objectos do dia-a-dia; respostas de 1 a 3 palavras" },
+  { key: "7", label: "7–8 anos", bank: Q78, gen: gen78, pg: 0.2,
+    desc: "crianças de 7–8 anos (nível do 3.º ano): natureza, corpo humano, Portugal, planetas, formas, contas simples e língua portuguesa" },
+  { key: "9", label: "9–10 anos", bank: Q910, gen: gen910, pg: 0.2,
+    desc: "crianças de 9–10 anos (nível do 5.º ano): história de Portugal, geografia, ciências, língua portuguesa, arte e matemática" },
+  { key: "11", label: "11–12 anos", bank: Q1112, gen: gen1112, pg: 0.2,
+    desc: "crianças de 11–12 anos (nível do 7.º ano): história, geografia, ciências naturais, física e química simples, língua portuguesa, literatura, arte e matemática" }
+];
+const groupOf = age => age <= 6 ? 0 : age <= 8 ? 1 : age <= 10 ? 2 : 3;
+
+/* ===================== utilitários ===================== */
+const $ = id => document.getElementById(id);
+const seg = (window.Intl && Intl.Segmenter) ? new Intl.Segmenter("pt", { granularity: "grapheme" }) : null;
+const glyphs = s => seg ? [...seg.segment(s)].length : [...s].length;
+const esc = s => String(s).replace(/[&<>"]/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+const hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const qid = (key, q) => key + ":" + hash(norm(q) || q);
+const plural = (n, um, varios) => n + " " + (n === 1 ? um : varios);
+// respostas só com desenhos (emojis) usam botões grandes
+const isEmojiOpt = o => /[\p{Extended_Pictographic}⃣]/u.test(o) && !/\p{L}/u.test(o);
+
+/* ===================== histórico (nunca repetir) ===================== */
+// seen: id -> minuto em que a pergunta saiu. extra: perguntas criadas pelo Claude, ainda por usar.
+const LS_KEY = "qss.history.v2", LS_SET = "qss.setup.v2";
+const emptyExtra = () => Object.fromEntries(G.map(g => [g.key, []]));
+let H = { seen: {}, extra: emptyExtra() };
+const BASEID = G.map(g => g.bank.map(r => qid(g.key, r[0])));
+const Store = { mode: "memory", hDoc: null, xDoc: null, writable: true, tm: null, busy: false, dirty: false };
+
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
+
+function validExtra(x) {
+  return x && typeof x.id === "string" && typeof x.q === "string" && typeof x.c === "string"
+    && Array.isArray(x.e) && x.e.length === 3 && x.e.every(s => typeof s === "string");
+}
+function mergeHist(src) {
+  if (!src || typeof src !== "object") return;
+  if (src.seen && typeof src.seen === "object") {
+    for (const [k, v] of Object.entries(src.seen)) if (typeof v === "number" && (!(k in H.seen) || H.seen[k] < v)) H.seen[k] = v;
+  }
+  if (src.extra && typeof src.extra === "object") {
+    for (const g of G) for (const x of (Array.isArray(src.extra[g.key]) ? src.extra[g.key] : [])) {
+      if (validExtra(x) && !H.seen[x.id] && !H.extra[g.key].some(y => y.id === x.id)) H.extra[g.key].push({ id: x.id, q: x.q, c: x.c, e: x.e });
+    }
+  }
+}
+function pruneSeen() {
+  const ks = Object.keys(H.seen);
+  if (ks.length <= 4000) return;
+  ks.sort((a, b) => H.seen[a] - H.seen[b]).slice(0, 800).forEach(k => delete H.seen[k]);
+}
+function paintStatus() {
+  const n = Object.keys(H.seen).length;
+  $("dbDot").className = "dot" + (Store.mode === "db" ? " on" : "");
+  const onde = Store.mode === "db" ? "guardado na conta" : Store.mode === "local" ? "guardado neste dispositivo" : "não guardado";
+  $("dbTxt").textContent = (n ? plural(n, "pergunta já feita", "perguntas já feitas") : "Ainda sem histórico") + " · " + onde;
+}
+function persist(now) {
+  if (lsSet(LS_KEY, H) && Store.mode === "memory") Store.mode = "local";
+  clearTimeout(Store.tm);
+  if (!Store.hDoc || !Store.writable) { paintStatus(); return; }
+  Store.tm = setTimeout(flush, now ? 0 : 1500);
+}
+async function flush() {
+  if (!Store.hDoc || !Store.writable) return;
+  if (Store.busy) { Store.dirty = true; return; }
+  Store.busy = true;
+  try {
+    do {
+      Store.dirty = false;
+      await Store.hDoc.set({ seen: H.seen });
+      await Store.xDoc.set({ extra: H.extra });
+    } while (Store.dirty);
+  } catch (e) {
+    if (e && e.code === "invalid_argument") { Store.writable = false; Store.mode = "local"; }
+  }
+  Store.busy = false;
+  paintStatus();
+}
+async function initDb() {
+  try {
+    const db = await window.claude?.use?.("db");
+    if (!db) return;
+    Store.hDoc = db.doc("quiz/history"); Store.xDoc = db.doc("quiz/extra");
+    const [h, x] = await Promise.all([Store.hDoc.get(), Store.xDoc.get()]);
+    if (h.exists) mergeHist({ seen: (h.data() || {}).seen });
+    if (x.exists) mergeHist({ extra: (x.data() || {}).extra });
+    Store.mode = "db";
+    persist(true);
+  } catch (e) { Store.hDoc = null; Store.xDoc = null; }
+  paintStatus();
+}
+function resetHistory() {
+  H = { seen: {}, extra: emptyExtra() };
+  persist(true); paintStatus();
+}
+
+/* ===================== escolha da pergunta ===================== */
+// Quando todas as perguntas de um grupo já saíram, volta a abrir o conjunto, mas guarda as 15 mais recentes.
+function rollSeen(g) {
+  const ids = BASEID[g].filter(id => H.seen[id]).sort((a, b) => H.seen[b] - H.seen[a]);
+  ids.slice(15).forEach(id => delete H.seen[id]);
+}
+function unseenExtra(g) { return H.extra[G[g].key].filter(x => !H.seen[x.id]); }
+function unseenBase(g) { const o = []; G[g].bank.forEach((r, i) => { if (!H.seen[BASEID[g][i]]) o.push(i); }); return o; }
+
+function draw(g) {
+  const key = G[g].key;
+  let row = null, id = null, src = "bank";
+  // 1) perguntas geradas (contas, desenhos para contar…): infinitas
+  if (Math.random() < G[g].pg) {
+    for (let i = 0; i < 14 && !row; i++) {
+      const r = G[g].gen(), rid = qid(key, r[0]);
+      if (!H.seen[rid]) { row = r; id = rid; src = "gen"; }
+    }
+  }
+  // 2) perguntas criadas pelo Claude ou do banco de perguntas
+  if (!row) {
+    let ext = unseenExtra(g), base = unseenBase(g);
+    if (!ext.length && !base.length) { rollSeen(g); ext = unseenExtra(g); base = unseenBase(g); }
+    if (!base.length && !ext.length) base = G[g].bank.map((_, i) => i);
+    if (ext.length && (!base.length || Math.random() < 0.6)) {
+      const x = pick(ext);
+      row = [x.q, x.c, ...x.e]; id = x.id; src = "ai";
+      H.extra[key] = H.extra[key].filter(y => y !== x);
+    } else {
+      const i = pick(base);
+      row = G[g].bank[i]; id = BASEID[g][i];
+    }
+  }
+  H.seen[id] = Math.floor(Date.now() / 60000);
+  pruneSeen(); persist();
+  return { q: row[0], right: row[1], opts: mix(row.slice(1)), src };
+}
+
+/* ===================== perguntas novas com o Claude ===================== */
+const TOPICS = ["animais", "corpo humano", "espaço e planetas", "história de Portugal", "geografia de Portugal",
+  "países e capitais", "rios, montanhas e oceanos", "plantas e natureza", "ciência do dia-a-dia", "literatura e arte",
+  "música e instrumentos", "desporto e Jogos Olímpicos", "inventores e descobertas", "língua portuguesa",
+  "formas e medidas", "tradições, festas e gastronomia portuguesa", "tempo, clima e planeta Terra", "transportes e tecnologia"];
+const AI = { fn: null, dead: false, busy: false, next: 0 };
+
+function setAiTxt(s) { const el = $("aiTxt"); if (el) el.textContent = s; }
+async function initSample() {
+  try { AI.fn = await window.claude?.use?.("sample"); } catch (e) { AI.fn = null; }
+  $("optAI").hidden = !AI.fn;
+}
+function activeGroups() { return S ? [...new Set(S.players.map(p => p.g))].sort((a, b) => a - b) : []; }
+function avoidList(g) {
+  return mix([...G[g].bank.map(r => r[0]), ...H.extra[G[g].key].map(x => x.q)]).slice(0, 12).map(q => "- " + q).join("\n");
+}
+function buildPrompt(groups) {
+  const n = groups.length <= 2 ? 10 : 8;
+  const blocos = groups.map(g => `Grupo "${G[g].key}": ${G[g].desc}. Temas sugeridos: ${mix(TOPICS).slice(0, 6).join("; ")}.\nPerguntas já usadas deste grupo (não repetir nem fazer variações):\n${avoidList(g)}`).join("\n\n");
+  const formato = "{" + groups.map(g => `"${G[g].key}":[{"q":"pergunta","c":"resposta certa","e":["errada 1","errada 2","errada 3"]}]`).join(",") + "}";
+  return `És autor de perguntas de cultura geral para crianças portuguesas. Escreve em português europeu, com a ortografia anterior ao Acordo Ortográfico de 1990 (por exemplo: «Egipto», «actor», «facto», «espectáculo», «correcto», «acção»).
+
+Cria ${n} perguntas de escolha múltipla para cada um dos grupos seguintes.
+
+${blocos}
+
+Regras:
+- Cada pergunta tem exactamente 1 resposta correcta e 3 erradas mas plausíveis, todas curtas (no máximo 40 caracteres).
+- Usa só factos de que tens certeza absoluta e que não mudam com o tempo. Evita recordes, rankings, populações, cargos políticos actuais e datas discutíveis.
+- Sem perguntas ambíguas, sem «nenhuma das anteriores» e sem a resposta escrita na pergunta.
+- Sem conteúdo violento, político ou sensível.
+- A dificuldade deve corresponder à idade do grupo, nem infantil de mais nem demasiado difícil.
+
+Responde apenas com JSON neste formato:
+${formato}`;
+}
+function cleanItem(it) {
+  if (!it || typeof it.q !== "string" || typeof it.c !== "string" || !Array.isArray(it.e)) return null;
+  const q = it.q.trim(), c = it.c.trim();
+  const e = it.e.map(s => typeof s === "string" ? s.trim() : "").filter(Boolean);
+  if (q.length < 12 || q.length > 170 || !c || c.length > 60 || e.length !== 3 || e.some(s => s.length > 60)) return null;
+  if (new Set([c, ...e].map(norm)).size !== 4) return null;
+  if (/nenhuma|todas as|ambas/i.test([c, ...e].join(" "))) return null;
+  const nc = norm(c);
+  if (nc.length > 4 && norm(q).includes(nc)) return null;
+  return { q, c, e };
+}
+function absorb(data) {
+  let n = 0;
+  if (!data || typeof data !== "object") return 0;
+  G.forEach((grp, g) => {
+    const list = Array.isArray(data[grp.key]) ? data[grp.key] : [];
+    for (const it of list) {
+      const x = cleanItem(it); if (!x) continue;
+      const id = qid(grp.key, x.q);
+      if (H.seen[id] || BASEID[g].includes(id) || H.extra[grp.key].some(y => y.id === id)) continue;
+      H.extra[grp.key].push({ id, ...x }); n++;
+    }
+    if (H.extra[grp.key].length > 120) H.extra[grp.key] = H.extra[grp.key].slice(-120);
+  });
+  if (n) persist();
+  return n;
+}
+async function refill() {
+  if (!AI.fn || AI.dead || AI.busy || Date.now() < AI.next) return;
+  const groups = activeGroups(); if (!groups.length) return;
+  AI.busy = true; setAiTxt("A criar perguntas novas…");
+  try {
+    const data = await AI.fn.json(buildPrompt(groups), { modelTier: "default", cache: false });
+    const n = absorb(data);
+    setAiTxt(n ? plural(n, "pergunta nova criada", "perguntas novas criadas") : "");
+    AI.next = Date.now() + 60000;
+  } catch (e) {
+    const c = e && e.code;
+    if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(c)) { AI.dead = true; $("optAI").hidden = true; }
+    AI.next = Date.now() + (c === "rate_limited" ? 600000 : 180000);
+    setAiTxt("");
+  }
+  AI.busy = false;
+}
+function maybeRefill() {
+  if (S && S.ai && activeGroups().some(g => unseenExtra(g).length < 4)) refill();
+}
+
+/* ===================== jogo ===================== */
+const LIMIT = 60;          // segundos por pergunta
+const STEP = 15;           // cada faixa de pontos dura 15 s
+const CIRC = 238.76;       // perímetro do anel (2·π·38)
+const MAXP = 8;            // máximo de jogadores
+const AGES = [5, 6, 7, 8, 9, 10, 11, 12];
+const SETUP = {
+  n: 2,
+  names: Array.from({ length: MAXP }, (_, i) => "Jogador " + (i + 1)),
+  ages: [9, 7, 5, 11, 8, 10, 6, 12]
+};
+
+let S = null;      // estado do jogo
+let timer = null;  // intervalo do relógio
+
+// 0–15 s = 4 pts · 15–30 s = 3 · 30–45 s = 2 · 45–60 s = 1 · depois disso = 0
+function worth(el) { return el >= LIMIT ? 0 : 4 - Math.floor(el / STEP); }
+
+/* ---------- configuração ---------- */
+function buildPlayers() {
+  const box = $("plist");
+  box.innerHTML = "";
+  for (let i = 0; i < SETUP.n; i++) {
+    const row = document.createElement("div");
+    row.className = "prow";
+    row.innerHTML = `<span class="pn">${i + 1}</span>`
+      + `<input type="text" id="pn${i}" maxlength="20" aria-label="Nome do jogador ${i + 1}">`
+      + `<select id="pa${i}" aria-label="Idade do jogador ${i + 1}">${AGES.map(a => `<option value="${a}">${a} anos</option>`).join("")}</select>`;
+    box.append(row);
+    const inp = row.querySelector("input"), sel = row.querySelector("select");
+    inp.value = SETUP.names[i]; sel.value = String(SETUP.ages[i]);
+    inp.addEventListener("input", () => { SETUP.names[i] = inp.value; });
+    sel.addEventListener("change", () => { SETUP.ages[i] = +sel.value; });
+  }
+  $("nOut").textContent = SETUP.n;
+  $("nMinus").disabled = SETUP.n <= 1;
+  $("nPlus").disabled = SETUP.n >= MAXP;
+}
+function loadSetup() {
+  const s = lsGet(LS_SET);
+  if (!s || typeof s !== "object") return;
+  if (Number.isInteger(s.n) && s.n >= 1 && s.n <= MAXP) SETUP.n = s.n;
+  if (Array.isArray(s.names)) s.names.slice(0, MAXP).forEach((x, i) => { if (typeof x === "string" && x.trim()) SETUP.names[i] = x.slice(0, 20); });
+  if (Array.isArray(s.ages)) s.ages.slice(0, MAXP).forEach((x, i) => { if (AGES.includes(x)) SETUP.ages[i] = x; });
+  if (s.ai === false) $("useAI").checked = false;
+}
+
+/* ---------- partida ---------- */
+function newGame() {
+  const players = [];
+  for (let i = 0; i < SETUP.n; i++) {
+    const age = SETUP.ages[i];
+    players.push({ name: (SETUP.names[i] || "").trim() || ("Jogador " + (i + 1)), age, g: groupOf(age), pts: 0, right: 0, asked: 0 });
+  }
+  S = { v: 2, players, turn: 0, ai: !!(AI.fn && !AI.dead && $("useAI").checked), cur: null };
+  lsSet(LS_SET, { n: SETUP.n, names: SETUP.names, ages: SETUP.ages, ai: $("useAI").checked });
+  $("setup").hidden = true; $("over").hidden = true; $("game").hidden = false;
+  setAiTxt("");
+  ask();
+  if (S.ai) refill();
+}
+
+function ask() {
+  const n = S.players.length, p = S.turn % n;
+  S.cur = { p, round: Math.floor(S.turn / n) + 1, ...draw(S.players[p].g), answered: false, choice: -1, pts: 0, elapsed: 0, t0: Date.now() };
+  render();
+}
+
+function renderScores() {
+  const c = S.cur, n = S.players.length;
+  const box = $("scores");
+  box.style.setProperty("--n", Math.min(n, 4));
+  box.classList.toggle("many", n > 4);
+  box.innerHTML = S.players.map((x, i) =>
+    `<div class="score${i === c.p ? " on" : ""}"><div class="n">${esc(x.name)}</div><div class="a">${x.age} anos</div><div class="p">${x.pts}</div></div>`).join("");
+}
+
+function render() {
+  const c = S.cur, pl = S.players[c.p];
+  const emoji = c.opts.every(isEmojiOpt);
+  renderScores();
+  $("who").textContent = "Vez de " + pl.name;
+  $("count").textContent = (S.players.length > 1 ? "Ronda " + c.round + " · " : "Pergunta " + c.round + " · ") + pl.age + " anos";
+  $("q").textContent = c.q;
+  $("srcline").hidden = c.src !== "ai";
+  $("hint").hidden = !emoji;
+  const box = $("answers");
+  const multi = emoji && c.opts.some(o => glyphs(o) >= 3);
+  box.className = "answers " + (emoji ? "emoji" : "text") + (multi ? " multi" : "");
+  box.style.setProperty("--cols", c.opts.length === 4 ? 2 : 3);
+  box.innerHTML = c.opts.map((o, i) =>
+    `<button class="ans" data-i="${i}" aria-label="${emoji ? "Opção " + (i + 1) : esc(o)}"><span class="l">${"ABCD"[i]}</span><span>${esc(o)}</span></button>`).join("");
+  box.querySelectorAll(".ans").forEach(b => b.addEventListener("click", () => choose(+b.dataset.i)));
+  if (c.answered) { reveal(); }
+  else { $("fb").hidden = true; startTimer(); }
+  $("qcard").classList.remove("pop"); void $("qcard").offsetWidth; $("qcard").classList.add("pop");
+}
+
+/* ---------- relógio ---------- */
+function startTimer() { stopTimer(); tick(); timer = setInterval(tick, 100); }
+function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+function tick() {
+  const c = S && S.cur;
+  if (!c || c.answered) { stopTimer(); return; }
+  const el = (Date.now() - c.t0) / 1000;
+  if (el >= LIMIT) { timeUp(); return; }
+  paintClock(el, false);
+}
+function paintClock(el, done) {
+  const c = S.cur;
+  const w = done ? c.pts : worth(el);
+  const left = Math.max(0, Math.ceil(LIMIT - el));
+  $("secs").textContent = Math.floor(left / 60) + ":" + String(left % 60).padStart(2, "0");
+  $("prg").style.strokeDashoffset = (CIRC * Math.min(1, el / LIMIT)).toFixed(2);
+  $("timer").dataset.b = w > 0 ? String(4 - w) : "x";
+  $("ring").classList.toggle("hurry", !done && left <= 10);
+  $("wl").textContent = done ? "Pontos desta pergunta" : "Vale agora";
+  $("wv").textContent = w + (w === 1 ? " ponto" : " pontos");
+  document.querySelectorAll("#bands span").forEach((s, i) => s.classList.toggle("on", w > 0 && i === 4 - w));
+}
+
+/* ---------- respostas ---------- */
+function choose(i) {
+  const c = S.cur; if (c.answered) return;
+  const el = (Date.now() - c.t0) / 1000;
+  if (el >= LIMIT) { timeUp(); return; }
+  stopTimer();
+  c.answered = true; c.choice = i; c.elapsed = el;
+  const ok = c.opts[i] === c.right;
+  c.pts = ok ? worth(el) : 0;
+  settle(c, ok);
+  reveal();
+}
+function timeUp() {
+  const c = S.cur; if (c.answered) return;
+  stopTimer();
+  c.answered = true; c.choice = -1; c.elapsed = LIMIT; c.pts = 0;
+  settle(c, false);
+  reveal();
+}
+// regista os pontos e passa a vez ao jogador seguinte
+function settle(c, ok) {
+  const pl = S.players[c.p];
+  pl.pts += c.pts; pl.asked++; if (ok) pl.right++;
+  S.turn++;
+  maybeRefill();
+}
+function reveal() {
+  const c = S.cur, emoji = c.opts.every(isEmojiOpt);
+  const ok = c.choice >= 0 && c.opts[c.choice] === c.right;
+  $("answers").querySelectorAll(".ans").forEach((b, j) => {
+    b.disabled = true;
+    b.classList.toggle("ok", c.opts[j] === c.right);
+    b.classList.toggle("bad", j === c.choice && !ok);
+    b.classList.toggle("dim", c.opts[j] !== c.right && j !== c.choice);
+  });
+  const secs = c.elapsed.toFixed(1).replace(".", ",") + " s";
+  const praise = ["Muito bem!", "Boa!", "Certíssimo!", "Isso mesmo!", "Espectáculo!"];
+  const certa = emoji ? "Era este." : "Resposta correcta: " + esc(c.right);
+  let html;
+  if (ok) html = `<span class="good">${pick(praise)} +${c.pts} ${c.pts === 1 ? "ponto" : "pontos"}</span> <small>em ${secs}</small>`;
+  else if (c.choice < 0) html = `<span class="nope">Acabou o tempo! ${certa}</span>`;
+  else html = `<span class="nope">Quase! ${certa}</span>`;
+  $("fbtxt").innerHTML = html;
+  paintClock(c.elapsed, true);
+  renderScores();
+  $("fb").hidden = false;
+  $("next").focus();
+}
+
+function finish() {
+  stopTimer();
+  $("game").hidden = true; $("over").hidden = false;
+  const sorted = S.players.slice().sort((a, b) => b.pts - a.pts);
+  const top = sorted[0].pts;
+  $("podium").innerHTML = sorted.map(x =>
+    `<div class="row${top > 0 && x.pts === top ? " win" : ""}"><span>${esc(x.name)} <small>${x.age} anos · ${x.right} certas em ${x.asked}</small></span><b>${x.pts}</b></div>`).join("") +
+    `<p class="hint" style="text-align:center">Todos merecem um prémio!</p>`;
+}
+
+/* ---------- arranque ---------- */
+(function boot() {
+  const sl = document.createElement("p"); sl.className = "src"; sl.id = "srcline"; sl.hidden = true;
+  sl.textContent = "Pergunta criada pelo Claude"; $("q").after(sl);
+  const ai = document.createElement("span"); ai.id = "aiTxt"; ai.className = "count";
+  document.querySelector(".foot").prepend(ai);
+
+  // histórico local primeiro (instantâneo); a conta junta-se logo que responder
+  mergeHist(lsGet(LS_KEY));
+  if (lsSet(LS_KEY, H)) Store.mode = "local";
+  paintStatus();
+
+  loadSetup();
+  buildPlayers();
+  $("nMinus").addEventListener("click", () => { if (SETUP.n > 1) { SETUP.n--; buildPlayers(); } });
+  $("nPlus").addEventListener("click", () => { if (SETUP.n < MAXP) { SETUP.n++; buildPlayers(); } });
+
+  $("start").addEventListener("click", newGame);
+  $("next").addEventListener("click", ask);
+  $("end").addEventListener("click", finish);
+  $("again").addEventListener("click", () => { $("over").hidden = true; $("setup").hidden = false; paintStatus(); });
+  let armed = null;
+  $("resetHist").addEventListener("click", () => {
+    const b = $("resetHist");
+    if (!armed) { b.textContent = "Confirmar: apagar tudo"; armed = setTimeout(() => { armed = null; b.textContent = "Limpar histórico"; }, 4000); return; }
+    clearTimeout(armed); armed = null; b.textContent = "Limpar histórico"; resetHistory();
+  });
+
+  initDb();
+  initSample();
+})();
+
+// se a página for actualizada a meio de um jogo, retoma onde estava
+function start(data) {
+  if (data && data.S && data.S.v === 2 && Array.isArray(data.S.players) && data.S.cur) {
+    S = data.S; $("setup").hidden = true; $("game").hidden = false; render();
+  }
+}
+window.claude?.hot?.snapshot?.(() => ({ S }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+<script>if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body></html>
